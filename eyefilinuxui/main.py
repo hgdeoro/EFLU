@@ -12,6 +12,8 @@ from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd, udhcpd_gen_config
 import argparse
 from eyefilinuxui.networking_setup import nm_check_disconnected,\
     nm_try_disconnect, ifconfig, nm_interface_exists
+from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config,\
+    start_eyefiserver2
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +27,14 @@ def main():
     # parser.add_argument('--ip', help='ip to use on the wifi interface', default='10.105.106.2')
     parser.add_argument('--wifi_ssid', help='ssid to use for the wifi network', required=True)
     parser.add_argument('--wifi_passphrase', help='connection password of the wifi network', required=True)
-    parser.add_argument('--mac_whitelist', help='MAC addresses to allow, separated by comas', default='',
-        required=True)
+    parser.add_argument('--mac_whitelist', help='MAC addresses to allow, separated by comas', default='')
+    parser.add_argument('--eyefi_mac', help='MAC address of EyeFi card', required=True)
     parser.add_argument('--eyefi_upload_key', help='EyeFi secret (from Settings.xml)', required=True)
+    parser.add_argument('--upload_dir', help='Directory to upload images', required=True)
 
     args = parser.parse_args()
+
+    # FIXME: validate arguments (ej: format of IP, MAC, upload dir perms, etc)
 
     if not nm_interface_exists(args.interface):
         parser.error("The interface {0} does not exists".format(args.interface))
@@ -58,6 +63,8 @@ def main():
     # HostAP
     #===========================================================================
     macs = [m.strip() for m in args.mac_whitelist.strip().split(',')]
+    if args.eyefi_mac not in macs:
+        macs.append(args.eyefi_mac)
     hostapd_config_filename = hostapd_gen_config(
         args.interface,
         args.wifi_ssid,
@@ -83,6 +90,15 @@ def main():
         ip,
     )
     start_udhcpd(udhcpd_config_filename)
+
+    #===========================================================================
+    # EyeFiServer2
+    #===========================================================================
+
+    eyefiserver2_config = eyefiserver2_gen_config(args.eyefi_mac,
+        args.eyefi_upload_key, args.upload_dir)
+
+    start_eyefiserver2(eyefiserver2_config)
 
     try:
         while True:

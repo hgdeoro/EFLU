@@ -50,6 +50,7 @@ from datetime import datetime
 import ConfigParser
 
 import math
+import logging
 
 
 eyeFiLogger = logging.getLogger(__name__)
