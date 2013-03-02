@@ -7,10 +7,12 @@ Created on Mar 2, 2013
 import logging
 import os
 import pprint
+import subprocess
 
 from multiprocessing import Pipe, Process
 
-from eyefilinuxui.util import MSG_QUIT, MSG_START, _send_msg
+from eyefilinuxui.util import MSG_QUIT, MSG_START, _send_msg, \
+    _recv_msg, MSG_GET_PID
 
 logger = logging.getLogger(__name__)
 
@@ -51,18 +53,55 @@ def udhcpd_gen_config(start, end, interface, opt_dns, opt_subnet, opt_router, pi
 def _udhcpd_target(conn):
     logger = logging.getLogger('udhcpd-child')
     logger.info("Waiting for message...")
+
+    process = None
+
     while True:
-        msg = conn.recv()
-        logger.info("Message received")
-        logger.debug("Msg: %s", pprint.pformat(msg))
-        if msg['action'] == MSG_QUIT:
-            break
-        if msg['action'] == MSG_START:
-            with open(CONFIG_FILE, 'r') as config_file:
-                for line in config_file.readlines():
-                    logger.debug("CONFIG >> %s", line.strip())
+        if conn.poll(1):
+            # Got a message
+            msg = conn.recv()
+            logger.info("Message received")
+            logger.debug("Msg: %s", pprint.pformat(msg))
+            if msg['action'] == MSG_QUIT:
+                if process:
+                    logging.warn("A process exists: %s", process)
+                # FIXME: stop process if exists?
+                break
+            if msg['action'] == MSG_START:
+                if process:
+                    # FIXME: raise error? stop old process? warn and continue?
+                    logging.warn("A process exists: %s. It will be overriden", process)
+                with open(CONFIG_FILE, 'r') as config_file:
+                    for line in config_file.readlines():
+                        logger.debug("CONFIG >> %s", line.strip())
+                args = ["sudo", "busybox", "udhcpd", "-f", msg['config_file']]
+                logger.info("Will Popen with args: %s", pprint.pformat(args))
+                process = subprocess.Popen(args, close_fds=True, cwd='/')
+                logger.info("Popen returded process %s", process)
+            if msg['action'] == MSG_GET_PID:
+                response = {}
+                if '_uuid' in msg:
+                    response['_uuid'] = msg['_uuid']
+                response['pid'] = None
+                if process:
+                    response['pid'] = process.pid
+
+                conn.send(response)
+        else:
+            if process:
+                # ret_code = process.wait()
+                process.poll()
+                if process.returncode is not None:
+                    logger.info("Cleaning up finished Popen process. Exit status: %s", process.returncode)
+                    if process.returncode != 0:
+                        logger.warn("Exit status != 0")
+                    process.wait()
+                    process = None
+                else:
+                    logger.debug("Popen process %s is running", process)
 
 
+# FIXME: lock
 def start_udhcpd():
     udhcpd_parent_conn, udhcpd_child_conn = Pipe()
     udhcpd_process = Process(target=_udhcpd_target, args=(udhcpd_child_conn,))
@@ -80,6 +119,7 @@ def start_udhcpd():
         'config_file': config_filename})
 
 
+# FIXME: lock
 def stop_udhcpd():
     logger.info("Stopping UDHCPD...")
     _send_msg(STATE, {'action': MSG_QUIT})
@@ -87,3 +127,11 @@ def stop_udhcpd():
     logger.info("Waiting for process.join() on pid %s...", STATE['process'].pid)
     STATE['process'].join()
     logger.info("Process exit status: %s", STATE['process'].exitcode)
+
+
+# FIXME: lock
+def get_udhcpd_pid():
+    """Returns the PID, or None if not running"""
+    msg_uuid = _send_msg(STATE, {'action': MSG_GET_PID})
+    msg = _recv_msg(STATE, msg_uuid=msg_uuid)
+    return msg['pid']
