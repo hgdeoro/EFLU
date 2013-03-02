@@ -18,8 +18,6 @@ QUEUE_NAME = 'eflu.eyefiserver2'
 
 CONFIG_FILE = '/tmp/.eyefiserver2.conf'
 
-LOG_FILE = '/tmp/eyefiserver2.log'
-
 STATE = {
     'running': False,
     'parent_conn': None,
@@ -54,7 +52,7 @@ def _generate_test_config():
 
 def _runEyeFi():
     """Call to the real runEyeFi() function"""
-    runEyeFi(CONFIG_FILE, LOG_FILE)
+    runEyeFi(CONFIG_FILE)
 
 
 # FIXME: lock
