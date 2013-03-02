@@ -45,6 +45,7 @@ import ConfigParser
 
 import math
 import logging
+from eyefilinuxui.util import send_event
 
 eyeFiLogger = logging.getLogger(__name__)
 
@@ -339,7 +340,7 @@ class EyeFiRequestHandler(BaseHTTPRequestHandler):
         if geotag_enable:
             geotag_accuracy = int(self.server.config.get('EyeFiServer', 'geotag_accuracy'))
 
-        tempDir = os.path.dirname(self.server.config.get('EyeFiServer', 'upload_dir'))
+        tempDir = os.path.normpath(self.server.config.get('EyeFiServer', 'upload_dir'))
 
         imageTarPath = os.path.join(tempDir, imageTarfileName)
         eyeFiLogger.debug("Generated path " + imageTarPath)
@@ -376,6 +377,11 @@ class EyeFiRequestHandler(BaseHTTPRequestHandler):
 
             f = imageTarfile.extract(member, uploadDir)
             imagePath = os.path.join(uploadDir, member.name)
+
+            send_event('eyefiserver', 'upload', {
+                'filename': imagePath,
+            })
+
             eyeFiLogger.debug("imagePath " + imagePath)
             os.utime(imagePath, (member.mtime + timeoffset, member.mtime + timeoffset))
             if uid != 0 and gid != 0:
@@ -400,7 +406,7 @@ class EyeFiRequestHandler(BaseHTTPRequestHandler):
                         if file_mode != "":
                             os.chmod(xmpPath, int(file_mode))
                 except:
-                    eyeFiLogger.error("Error processing LOG file " + imagePath)
+                    eyeFiLogger.exception("Error processing LOG file " + imagePath)
 
         eyeFiLogger.debug("Closing TAR file " + imageTarPath)
         imageTarfile.close()

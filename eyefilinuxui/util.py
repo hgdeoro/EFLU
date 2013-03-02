@@ -17,6 +17,8 @@ MSG_START = 'start'
 MSG_GET_PID = 'get_pid'
 MSG_QUIT = 'quit'
 
+EVENT_QUEUE_NAME = 'eflu.events'
+
 
 def _send_msg(state, msg):
     """Sends a message to the child process"""
@@ -50,6 +52,15 @@ def _send_amqp_msg(msg, queue_name):
     channel.exchange_declare(exchange=queue_name, type='fanout')
     channel.basic_publish(exchange=queue_name, routing_key='', body=json.dumps(msg))
     connection.close()
+
+
+def send_event(origin, event_type, extra=None):
+    msg = {
+        'origin': origin,
+        'type': event_type,
+        'extra': extra,
+    }
+    _send_amqp_msg(msg, EVENT_QUEUE_NAME)
 
 
 def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
