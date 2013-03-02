@@ -38,9 +38,9 @@ def _recv_msg(state, msg_uuid=None):
     return msg
 
 
-def _send_amqp_msg(msg):
+def _send_amqp_msg(msg, queue_name):
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
-    channel.exchange_declare(exchange='eflu', type='fanout')
-    channel.basic_publish(exchange='eflu', routing_key='', body=json.dumps(msg))
+    channel.exchange_declare(exchange=queue_name, type='fanout')
+    channel.basic_publish(exchange=queue_name, routing_key='', body=json.dumps(msg))
     connection.close()

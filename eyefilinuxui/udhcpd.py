@@ -20,6 +20,8 @@ from eyefilinuxui.util import MSG_QUIT, MSG_START, \
 
 logger = logging.getLogger(__name__)
 
+QUEUE_NAME = 'eflu.udhcpd'
+
 CONFIG_FILE = '/tmp/.eyefi-udhcpd.conf'
 PID_FILE = '/tmp/.eyefi-udhcpd.pid'
 LEASE_FILE = '/tmp/.eyefi-udhcpd-leases'
@@ -63,10 +65,10 @@ def _udhcpd_target(conn):
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
-    channel.exchange_declare(exchange='eflu', type='fanout')
+    channel.exchange_declare(exchange=QUEUE_NAME, type='fanout')
     result = channel.queue_declare(exclusive=True)
     queue_name = result.method.queue
-    channel.queue_bind(exchange='eflu', queue=queue_name)
+    channel.queue_bind(exchange=QUEUE_NAME, queue=queue_name)
 
     def callback(ch, method, properties, msg):
         msg = json.loads(msg)
@@ -151,13 +153,13 @@ def start_udhcpd():
     STATE['parent_conn'] = udhcpd_parent_conn
     STATE['process'] = udhcpd_process
 
-    _send_amqp_msg({'action': MSG_START, 'config_file': config_filename})
+    _send_amqp_msg({'action': MSG_START, 'config_file': config_filename}, QUEUE_NAME)
 
 
 # FIXME: lock
 def stop_udhcpd():
     logger.info("Stopping UDHCPD...")
-    _send_amqp_msg({'action': MSG_QUIT})
+    _send_amqp_msg({'action': MSG_QUIT}, QUEUE_NAME)
     STATE['running'] = False
     logger.info("Waiting for process.join() on pid %s...", STATE['process'].pid)
     STATE['process'].join()
@@ -168,7 +170,7 @@ def stop_udhcpd():
 def get_udhcpd_pid():
     """Returns the PID, or None if not running"""
     msg_uuid = str(uuid.uuid4())
-    _send_amqp_msg({'_uuid': msg_uuid, 'action': MSG_GET_PID})
+    _send_amqp_msg({'_uuid': msg_uuid, 'action': MSG_GET_PID}, QUEUE_NAME)
 
     msg = _recv_msg(STATE, msg_uuid=msg_uuid)
     return msg['pid']
