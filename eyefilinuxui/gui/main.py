@@ -109,6 +109,7 @@ class ImageViewer(QtGui.QMainWindow):
         self.printAct.setEnabled(True)
         self.fitToWindowAct.setEnabled(True)
         self.updateActions()
+        self.fitToWindow()
 
         if not self.fitToWindowAct.isChecked():
             self.imageLabel.adjustSize()
@@ -185,7 +186,7 @@ class ImageViewer(QtGui.QMainWindow):
 
         self.fitToWindowAct = QtGui.QAction("&Fit to Window", self,
                 enabled=True, checkable=True, shortcut="Ctrl+F",
-                triggered=self.fitToWindow)
+                checked=True, triggered=self.fitToWindow)
 
         self.aboutAct = QtGui.QAction("&About", self, triggered=self.about)
 
