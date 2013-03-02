@@ -10,7 +10,7 @@ import pprint
 
 from multiprocessing import Pipe, Process
 
-from eyefilinuxui.util import MSG_QUIT, MSG_START
+from eyefilinuxui.util import MSG_QUIT, MSG_START, _send_msg
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +22,6 @@ STATE = {
     'parent_conn': None,
     'process': None,
 }
-
-
-def _send_msg(msg):
-    """Sends a message to the child process"""
-    assert STATE['running']
-    assert STATE['parent_conn']
-    assert STATE['process']
-    STATE['parent_conn'].send(msg)
 
 
 def hostapd_gen_config(interface, ssid, accepted_mac_list, wpa_passphrase):
@@ -82,13 +74,13 @@ def start_hostapd():
 
     config_filename = hostapd_gen_config('wlan1', 'som-network-name', ('12:12:12:12:12:12',), 'wifipass')
 
-    _send_msg({'action': MSG_START,
+    _send_msg(STATE, {'action': MSG_START,
         'config_file': config_filename})
 
 
 def stop_hostapd():
     logger.info("Stopping hostapd...")
-    _send_msg({'action': MSG_QUIT})
+    _send_msg(STATE, {'action': MSG_QUIT})
     STATE['running'] = False
     logger.info("Waiting for process.join() on pid %s...", STATE['process'].pid)
     STATE['process'].join()
