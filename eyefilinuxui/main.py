@@ -4,12 +4,12 @@ Created on Mar 2, 2013
 @author: Horacio G. de Oro
 '''
 
+import argparse
 import logging
 import time
 
 from eyefilinuxui.hostapd import start_hostapd, stop_hostapd, hostapd_gen_config
 from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd, udhcpd_gen_config
-import argparse
 from eyefilinuxui.networking_setup import nm_check_disconnected,\
     nm_try_disconnect, ifconfig, nm_interface_exists
 from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config,\
@@ -62,9 +62,12 @@ def main():
     #===========================================================================
     # HostAP
     #===========================================================================
-    macs = [m.strip() for m in args.mac_whitelist.strip().split(',')]
+    macs = [m.strip() for m in args.mac_whitelist.strip().split(',') if m.strip()]
     if args.eyefi_mac not in macs:
         macs.append(args.eyefi_mac)
+    for mac in macs:
+        if len(mac.split(':')) != 6:
+            parser.error("Invalid MAC: '{0}' - Use: xx:xx:xx:xx:xx:xx format".format(mac))
     hostapd_config_filename = hostapd_gen_config(
         args.interface,
         args.wifi_ssid,
@@ -95,7 +98,7 @@ def main():
     # EyeFiServer2
     #===========================================================================
 
-    eyefiserver2_config = eyefiserver2_gen_config(args.eyefi_mac,
+    eyefiserver2_config = eyefiserver2_gen_config("".join(args.eyefi_mac.split(":")),
         args.eyefi_upload_key, args.upload_dir)
 
     start_eyefiserver2(eyefiserver2_config)
