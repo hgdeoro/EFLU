@@ -4,11 +4,11 @@ Created on Mar 2, 2013
 @author: Horacio G. de Oro
 '''
 
-import unittest
 import logging
+import time
+import unittest
 
 from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd, get_udhcpd_pid
-import time
 
 
 class LaunchTest(unittest.TestCase):
