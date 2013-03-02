@@ -6,10 +6,9 @@ Created on Mar 2, 2013
 
 import logging
 import os
-import uuid
 
-from eyefilinuxui.util import MSG_QUIT, MSG_GET_PID, \
-    _recv_msg, _send_amqp_msg, generic_start_multiprocess
+from eyefilinuxui.util import generic_start_multiprocess, \
+    generic_mp_get_pid, generic_mp_stop
 
 logger = logging.getLogger(__name__)
 
@@ -58,24 +57,15 @@ def _generate_test_config():
 def start_hostapd(config_filename):
     start_args = ["sudo", "hostapd", config_filename]
     action_map = {}
-    generic_start_multiprocess(start_args, action_map, logger, QUEUE_NAME, STATE)
+    return generic_start_multiprocess(start_args, action_map, logger, QUEUE_NAME, STATE)
 
 
 # FIXME: lock
 def stop_hostapd():
-    logger.info("Stopping hostapd...")
-    _send_amqp_msg({'action': MSG_QUIT}, QUEUE_NAME)
-    STATE['running'] = False
-    logger.info("Waiting for process.join() on pid %s...", STATE['process'].pid)
-    STATE['process'].join()
-    logger.info("Process exit status: %s", STATE['process'].exitcode)
+    return generic_mp_stop(logger, QUEUE_NAME, STATE)
 
 
 # FIXME: lock
 def get_hostapd_pid():
     """Returns the PID, or None if not running"""
-    msg_uuid = str(uuid.uuid4())
-    _send_amqp_msg({'_uuid': msg_uuid, 'action': MSG_GET_PID}, QUEUE_NAME)
-
-    msg = _recv_msg(STATE, msg_uuid=msg_uuid)
-    return msg['pid']
+    return generic_mp_get_pid(logger, QUEUE_NAME, STATE)

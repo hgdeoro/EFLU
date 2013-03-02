@@ -156,3 +156,21 @@ def generic_start_multiprocess(start_args, action_map, _logger, queue_name, stat
     state['process'] = process
 
     _send_amqp_msg({'action': MSG_START}, queue_name)
+
+
+def generic_mp_stop(_logger, queue_name, state):
+    _logger.info("Stopping UDHCPD...")
+    _send_amqp_msg({'action': MSG_QUIT}, queue_name)
+    state['running'] = False
+    _logger.info("Waiting for process.join() on pid %s...", state['process'].pid)
+    state['process'].join()
+    _logger.info("Process exit status: %s", state['process'].exitcode)
+
+
+def generic_mp_get_pid(_logger, queue_name, state):
+    """Returns the PID, or None if not running"""
+    msg_uuid = str(uuid.uuid4())
+    _send_amqp_msg({'_uuid': msg_uuid, 'action': MSG_GET_PID}, queue_name)
+
+    msg = _recv_msg(state, msg_uuid=msg_uuid)
+    return msg['pid']
