@@ -84,6 +84,9 @@ def _hostapd_target(conn):
 
 
 def start_hostapd():
+    # Detect errors earlier...
+    config_filename = hostapd_gen_config('wlan1', 'som-network-name', ('12:12:12:12:12:12',), 'wifipass')
+
     hostapd_parent_conn, hostapd_child_conn = Pipe()
     hostapd_process = Process(target=_hostapd_target, args=(hostapd_child_conn,))
     logging.info("Launching child HOSTAPD")
@@ -92,8 +95,6 @@ def start_hostapd():
     STATE['running'] = True
     STATE['parent_conn'] = hostapd_parent_conn
     STATE['process'] = hostapd_process
-
-    config_filename = hostapd_gen_config('wlan1', 'som-network-name', ('12:12:12:12:12:12',), 'wifipass')
 
     _send_msg(STATE, {'action': MSG_START,
         'config_file': config_filename})

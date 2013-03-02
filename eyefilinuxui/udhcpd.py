@@ -4,19 +4,19 @@ Created on Mar 2, 2013
 @author: Horacio G. de Oro
 '''
 
+import json
 import logging
 import os
+import pika
 import pprint
 import subprocess
+import uuid
 
 from multiprocessing import Pipe, Process
-
-from eyefilinuxui.util import MSG_QUIT, MSG_START, _send_msg, \
-    _recv_msg, MSG_GET_PID, _send_amqp_msg
-import pika
-import json
-import uuid
 from pika.exceptions import AMQPConnectionError
+
+from eyefilinuxui.util import MSG_QUIT, MSG_START, \
+    _recv_msg, MSG_GET_PID, _send_amqp_msg
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +134,10 @@ def _udhcpd_target(conn):
 
 # FIXME: lock
 def start_udhcpd():
+    # Detect errors earlier...
+    config_filename = udhcpd_gen_config('10.105.106.100', '10.105.106.199', 'wlan1',
+        '10.105.106.2', '255.255.255.0', '10.105.106.2')
+
     udhcpd_parent_conn, udhcpd_child_conn = Pipe()
     udhcpd_process = Process(target=_udhcpd_target, args=(udhcpd_child_conn,))
     logging.info("Launching child UDHCPD")
@@ -146,9 +150,6 @@ def start_udhcpd():
     STATE['running'] = True
     STATE['parent_conn'] = udhcpd_parent_conn
     STATE['process'] = udhcpd_process
-
-    config_filename = udhcpd_gen_config('10.105.106.100', '10.105.106.199', 'wlan1',
-        '10.105.106.2', '255.255.255.0', '10.105.106.2')
 
     _send_amqp_msg({'action': MSG_START, 'config_file': config_filename})
 
