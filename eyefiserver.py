@@ -18,7 +18,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-
 import cgi
 import time
 from datetime import timedelta
@@ -46,21 +45,8 @@ import ConfigParser
 
 import math
 import logging
-import signal
-
 
 eyeFiLogger = logging.getLogger(__name__)
-
-
-RUNNING = False
-
-
-def stop(*args):
-    global RUNNING
-    RUNNING = False
-
-signal.signal(signal.SIGTERM, stop)
-signal.signal(signal.SIGINT, stop)
 
 
 """
@@ -117,8 +103,6 @@ class EyeFiServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
         BaseHTTPServer.HTTPServer.__init__(self, *args, **kwargs)
         self.socket.settimeout(None)
         self.timeout = 1
-        global RUNNING
-        RUNNING = True
 
 
 # This class is responsible for handling HTTP requests passed to it.
@@ -673,6 +657,4 @@ def runEyeFi(configfile):
     eyeFiServer = EyeFiServer(server_address, EyeFiRequestHandler)
     eyeFiServer.config = config
     eyeFiLogger.info("Eye-Fi server started listening on port " + str(server_address[1]))
-    while RUNNING:
-        eyeFiLogger.debug("eyeFiServer.handle_request()")
-        eyeFiServer.handle_request()
+    eyeFiServer.serve_forever()
