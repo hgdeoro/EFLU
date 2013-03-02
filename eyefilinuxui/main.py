@@ -7,7 +7,7 @@ Created on Mar 2, 2013
 import logging
 
 from eyefilinuxui.hostapd import start_hostapd, stop_hostapd
-from eyefilinuxui.dhcpd import start_udhcpd, stop_udhcpd
+from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd
 
 logger = logging.getLogger(__name__)
 
