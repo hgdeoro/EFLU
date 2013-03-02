@@ -79,7 +79,8 @@ def _udhcpd_target(conn):
             if process:
                 logging.warn("A process exists: %s", process[0])
             # FIXME: stop process if exists?
-            process.pop()
+            while process:
+                process.pop()
             connection.close()
             return
 
@@ -87,7 +88,8 @@ def _udhcpd_target(conn):
             if process:
                 # FIXME: raise error? stop old process? warn and continue?
                 logging.warn("A process exists: %s. It will be overriden", process[0])
-                process.pop()
+                while process:
+                    process.pop()
             with open(CONFIG_FILE, 'r') as config_file:
                 for line in config_file.readlines():
                     logger.debug("CONFIG >> %s", line.strip())
@@ -118,7 +120,8 @@ def _udhcpd_target(conn):
                     if process[0].returncode != 0:
                         logger.warn("Exit status != 0")
                     process[0].wait()
-                    process.pop()
+                    while process:
+                        process.pop()
                 else:
                     logger.debug("Popen process %s is running", process[0])
             return
