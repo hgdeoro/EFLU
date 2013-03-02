@@ -4,6 +4,8 @@ Created on Mar 2, 2013
 @author: Horacio G. de Oro
 '''
 import uuid
+import pika
+import json
 
 MSG_START = 'start'
 MSG_GET_PID = 'get_pid'
@@ -34,3 +36,11 @@ def _recv_msg(state, msg_uuid=None):
         assert msg_uuid == msg['_uuid']
 
     return msg
+
+
+def _send_amqp_msg(msg):
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
+    channel.exchange_declare(exchange='eflu', type='fanout')
+    channel.basic_publish(exchange='eflu', routing_key='', body=json.dumps(msg))
+    connection.close()
