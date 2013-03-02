@@ -44,8 +44,6 @@ import httplib
 
 import SocketServer
 
-import logging.handlers
-
 import signal
 
 from datetime import datetime
@@ -53,7 +51,8 @@ import ConfigParser
 
 import math
 
-from sys import stdout as sys_stdout
+
+eyeFiLogger = logging.getLogger(__name__)
 
 
 """
@@ -65,19 +64,6 @@ Starting this server creates a listener on port 59278. I use the BaseHTTPServer 
 with Python. I look for specific POST/GET request URLs and execute functions based on those
 URLs.
 """
-
-# Create the main logger
-eyeFiLogger = logging.Logger("eyeFiLogger", logging.DEBUG)
-
-# Create two handlers. One to print to the log and one to print to the console
-consoleHandler = logging.StreamHandler(sys_stdout)
-
-# Set how both handlers will print the pretty log events
-eyeFiLoggingFormat = logging.Formatter("[%(asctime)s][%(funcName)s] - %(message)s", '%m/%d/%y %I:%M%p')
-consoleHandler.setFormatter(eyeFiLoggingFormat)
-
-# Append both handlers to the main Eye Fi Server logger
-eyeFiLogger.addHandler(consoleHandler)
 
 
 # Eye Fi XML SAX ContentHandler
@@ -94,28 +80,23 @@ class EyeFiContentHandler(ContentHandler):
     extractedElements = {}
 
     def __init__(self):
-
         self.extractedElements = {}
-
         for elementName in self.elementNamesToExtract:
             self.elementsToExtract[elementName] = False
 
     def startElement(self, name, attributes):
-
         # If the name of the element is a key in the dictionary elementsToExtract
         # set the value to True
         if name in self.elementsToExtract:
             self.elementsToExtract[name] = True
 
     def endElement(self, name):
-
         # If the name of the element is a key in the dictionary elementsToExtract
         # set the value to False
         if name in self.elementsToExtract:
             self.elementsToExtract[name] = False
 
     def characters(self, content):
-
         for elementName in self.elementsToExtract:
             if self.elementsToExtract[elementName] == True:
                 self.extractedElements[elementName] = content
@@ -730,15 +711,8 @@ def runEyeFi(configfile, logfile):
 
     # configfile = sys.argv[2]
     eyeFiLogger.info("Reading config " + configfile)
-
     config = ConfigParser.SafeConfigParser({'geotag_enable': '0'})
     config.read(configfile)
-
-    # open file logging
-    # logfile = sys.argv[3]
-    fileHandler = logging.handlers.TimedRotatingFileHandler(logfile, "D", 7, backupCount=7, encoding=None)
-    fileHandler.setFormatter(eyeFiLoggingFormat)
-    eyeFiLogger.addHandler(fileHandler)
 
     server_address = (config.get('EyeFiServer', 'host_name'), config.getint('EyeFiServer', 'host_port'))
 
