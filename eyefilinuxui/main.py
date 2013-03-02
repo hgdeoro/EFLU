@@ -11,9 +11,10 @@ import time
 from eyefilinuxui.hostapd import start_hostapd, stop_hostapd, hostapd_gen_config
 from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd, udhcpd_gen_config
 from eyefilinuxui.networking_setup import nm_check_disconnected,\
-    nm_try_disconnect, ifconfig, nm_interface_exists
+    nm_try_disconnect, ifconfig, nm_interface_exists, iptables
 from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config,\
     start_eyefiserver2, stop_eyefiserver2
+from eyefilinuxui.gui.main import start_gui
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,8 @@ def main():
     #    sudo iptables -I FORWARD -o $IFACE -j REJECT
 
     ifconfig(args.interface, ip)
+
+    iptables(args.interface, ip)
 
     #===========================================================================
     # HostAP
@@ -104,12 +107,24 @@ def main():
     start_eyefiserver2(eyefiserver2_config)
 
     try:
+        qt_app = start_gui()
+        logging.warn("")
+        logging.warn("")
+        logging.warn("")
+        logging.warn(" THE APP WILL CONTINUE RUNNING UNTIL YOU PRESS Ctrl+C")
+        logging.warn("")
+        logging.warn("")
+        logging.warn("")
         while True:
             time.sleep(1)
+        # Here we force the user to press Ctrl+C
+        # FIXME: make subprocess exit even without pressing Ctrl+C
+        # (don't know why doens't work without Ctrl+C)
     except KeyboardInterrupt:
         stop_hostapd()
         stop_udhcpd()
         stop_eyefiserver2()
+        qt_app.quit()
 
 
 if __name__ == '__main__':

@@ -180,6 +180,7 @@ def generic_mp_stop(_logger, queue_name, state):
     _send_amqp_msg({'action': MSG_QUIT}, queue_name)
     state['running'] = False
     _logger.info("Waiting for process.join() on pid %s...", state['process'].pid)
+    state['process'].terminate()
     state['process'].join()
     _logger.info("Process exit status: %s", state['process'].exitcode)
 

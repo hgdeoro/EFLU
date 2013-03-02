@@ -45,6 +45,7 @@ import ConfigParser
 
 import math
 import logging
+
 from eyefilinuxui.util import send_event
 
 eyeFiLogger = logging.getLogger(__name__)
