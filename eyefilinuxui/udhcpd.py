@@ -11,7 +11,8 @@ import uuid
 from multiprocessing import Pipe, Process
 
 from eyefilinuxui.util import MSG_QUIT, MSG_START, \
-    _recv_msg, MSG_GET_PID, _send_amqp_msg, generic_target
+    _recv_msg, MSG_GET_PID, _send_amqp_msg, generic_target,\
+    generic_start_multiprocess
 
 logger = logging.getLogger(__name__)
 
@@ -58,30 +59,34 @@ def _generate_test_config():
         '10.105.106.2', '255.255.255.0', '10.105.106.2')
 
 
-# FIXME: lock
-def start_udhcpd(config_filename):
-    udhcpd_parent_conn, udhcpd_child_conn = Pipe()
-    start_args = ["sudo", "busybox", "udhcpd", "-f", config_filename]
-    action_map = {}
-    udhcpd_process = Process(target=generic_target, args=(
-        udhcpd_child_conn,
-        logger,
-        QUEUE_NAME,
+def _generic_start_multiprocess(start_args, action_map, _logger, queue_name, state):
+    parent_conn, child_conn = Pipe()
+    process = Process(target=generic_target, args=(
+        child_conn,
+        _logger,
+        queue_name,
         start_args,
         action_map
     ))
-    logging.info("Launching child UDHCPD")
-    udhcpd_process.start()
+    _logger.info("Launching child UDHCPD")
+    process.start()
 
-    logging.info("Waiting for ACK")
-    udhcpd_parent_conn.recv()
-    logging.info("ACK received...")
+    process.info("Waiting for ACK")
+    parent_conn.recv()
+    process.info("ACK received...")
 
-    STATE['running'] = True
-    STATE['parent_conn'] = udhcpd_parent_conn
-    STATE['process'] = udhcpd_process
+    state['running'] = True
+    state['parent_conn'] = parent_conn
+    state['process'] = process
 
-    _send_amqp_msg({'action': MSG_START, 'config_file': config_filename}, QUEUE_NAME)
+    _send_amqp_msg({'action': MSG_START}, queue_name)
+
+
+# FIXME: lock
+def start_udhcpd(config_filename):
+    start_args = ["sudo", "busybox", "udhcpd", "-f", config_filename]
+    action_map = {}
+    generic_start_multiprocess(start_args, action_map, logger, QUEUE_NAME, STATE)
 
 
 # FIXME: lock

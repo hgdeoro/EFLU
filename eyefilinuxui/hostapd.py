@@ -8,10 +8,8 @@ import logging
 import os
 import uuid
 
-from multiprocessing import Pipe, Process
-
-from eyefilinuxui.util import MSG_QUIT, MSG_START, MSG_GET_PID, \
-    _recv_msg, _send_amqp_msg, generic_target
+from eyefilinuxui.util import MSG_QUIT, MSG_GET_PID, \
+    _recv_msg, _send_amqp_msg, generic_start_multiprocess
 
 logger = logging.getLogger(__name__)
 
@@ -58,29 +56,9 @@ def _generate_test_config():
 
 # FIXME: lock
 def start_hostapd(config_filename):
-    hostapd_parent_conn, hostapd_child_conn = Pipe()
     start_args = ["sudo", "hostapd", config_filename]
     action_map = {}
-    hostapd_process = Process(target=generic_target, args=(
-        hostapd_child_conn,
-        logger,
-        QUEUE_NAME,
-        start_args,
-        action_map
-    ))
-
-    logging.info("Launching child HOSTAPD")
-    hostapd_process.start()
-
-    logging.info("Waiting for ACK")
-    hostapd_parent_conn.recv()
-    logging.info("ACK received...")
-
-    STATE['running'] = True
-    STATE['parent_conn'] = hostapd_parent_conn
-    STATE['process'] = hostapd_process
-
-    _send_amqp_msg({'action': MSG_START, 'config_file': config_filename}, QUEUE_NAME)
+    generic_start_multiprocess(start_args, action_map, logger, QUEUE_NAME, STATE)
 
 
 # FIXME: lock

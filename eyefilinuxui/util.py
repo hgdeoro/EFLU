@@ -7,9 +7,10 @@ import uuid
 import pika
 import json
 import pprint
-
-from pika.exceptions import AMQPConnectionError
 import subprocess
+
+from multiprocessing import Process, Pipe
+from pika.exceptions import AMQPConnectionError
 
 
 MSG_START = 'start'
@@ -132,3 +133,26 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
             _logger.info("Ignoring AMQPConnectionError")
         else:
             raise
+
+
+def generic_start_multiprocess(start_args, action_map, _logger, queue_name, state):
+    parent_conn, child_conn = Pipe()
+    process = Process(target=generic_target, args=(
+        child_conn,
+        _logger,
+        queue_name,
+        start_args,
+        action_map
+    ))
+    _logger.info("Launching child UDHCPD")
+    process.start()
+
+    _logger.info("Waiting for ACK")
+    parent_conn.recv()
+    _logger.info("ACK received...")
+
+    state['running'] = True
+    state['parent_conn'] = parent_conn
+    state['process'] = process
+
+    _send_amqp_msg({'action': MSG_START}, queue_name)
