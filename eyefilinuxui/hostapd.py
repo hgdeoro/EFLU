@@ -53,22 +53,22 @@ def hostapd_gen_config(interface, ssid, accepted_mac_list, wpa_passphrase):
     return CONFIG_FILE
 
 
-def _generic_target_start(msg, process):
-    if process:
-        # FIXME: raise error? stop old process? warn and continue?
-        logger.warn("A process exists: %s. It will be overriden", process[0])
-        while process:
-            process.pop()
-
-    with open('/tmp/.eyefi-hostapd.conf', 'r') as config_file:
-        for line in config_file.readlines():
-            logger.debug(".eyefi-hostapd.conf >> %s", line.strip())
-
-    args = ["sudo", "hostapd", msg['config_file']]
-    logger.info("Will Popen with args: %s", pprint.pformat(args))
-    process.append(subprocess.Popen(args, close_fds=True, cwd='/'))
-    logger.info("Popen returded process %s", process)
-    return
+#def _generic_target_start(msg, process):
+#    if process:
+#        # FIXME: raise error? stop old process? warn and continue?
+#        logger.warn("A process exists: %s. It will be overriden", process[0])
+#        while process:
+#            process.pop()
+#
+#    with open('/tmp/.eyefi-hostapd.conf', 'r') as config_file:
+#        for line in config_file.readlines():
+#            logger.debug(".eyefi-hostapd.conf >> %s", line.strip())
+#
+#    args = ["sudo", "hostapd", msg['config_file']]
+#    logger.info("Will Popen with args: %s", pprint.pformat(args))
+#    process.append(subprocess.Popen(args, close_fds=True, cwd='/'))
+#    logger.info("Popen returded process %s", process)
+#    return
 
 
 def _generate_test_config():
@@ -79,15 +79,16 @@ def _generate_test_config():
 # FIXME: lock
 def start_hostapd(config_filename):
     hostapd_parent_conn, hostapd_child_conn = Pipe()
-    args = (
+    start_args = ["sudo", "hostapd", config_filename]
+    action_map = {}
+    hostapd_process = Process(target=generic_target, args=(
         hostapd_child_conn,
         logger,
         QUEUE_NAME,
-        {
-            MSG_START: _generic_target_start,
-        }
-    )
-    hostapd_process = Process(target=generic_target, args=args)
+        start_args,
+        action_map
+    ))
+
     logging.info("Launching child HOSTAPD")
     hostapd_process.start()
 

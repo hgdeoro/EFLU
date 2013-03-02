@@ -63,34 +63,18 @@ def _generate_test_config():
         '10.105.106.2', '255.255.255.0', '10.105.106.2')
 
 
-def _generic_target_start(msg, process):
-    if process:
-        # FIXME: raise error? stop old process? warn and continue?
-        logging.warn("A process exists: %s. It will be overriden", process[0])
-        while process:
-            process.pop()
-    with open(CONFIG_FILE, 'r') as config_file:
-        for line in config_file.readlines():
-            logger.debug("CONFIG >> %s", line.strip())
-    args = ["sudo", "busybox", "udhcpd", "-f", msg['config_file']]
-    logger.info("Will Popen with args: %s", pprint.pformat(args))
-    process.append(subprocess.Popen(args, close_fds=True, cwd='/'))
-    logger.info("Popen returded process %s", process[0])
-    return
-
-
 # FIXME: lock
 def start_udhcpd(config_filename):
     udhcpd_parent_conn, udhcpd_child_conn = Pipe()
-    args = (
+    start_args = ["sudo", "busybox", "udhcpd", "-f", config_filename]
+    action_map = {}
+    udhcpd_process = Process(target=generic_target, args=(
         udhcpd_child_conn,
         logger,
         QUEUE_NAME,
-        {
-            MSG_START: _generic_target_start,
-        }
-    )
-    udhcpd_process = Process(target=generic_target, args=args)
+        start_args,
+        action_map
+    ))
     logging.info("Launching child UDHCPD")
     udhcpd_process.start()
 

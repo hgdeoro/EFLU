@@ -9,6 +9,7 @@ import json
 import pprint
 
 from pika.exceptions import AMQPConnectionError
+import subprocess
 
 
 MSG_START = 'start'
@@ -50,7 +51,7 @@ def _send_amqp_msg(msg, queue_name):
     connection.close()
 
 
-def generic_target(conn, _logger, amqp_queue_name, action_map):
+def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
     _logger.info("Waiting for message...")
 
     process = []
@@ -87,6 +88,17 @@ def generic_target(conn, _logger, amqp_queue_name, action_map):
 
             # data es sent over 'connection' (Pipe)
             conn.send(response)
+            return
+
+        if msg['action'] == MSG_START:
+            if process:
+                # FIXME: raise error? stop old process? warn and continue?
+                _logger.warn("A process exists: %s. It will be overriden", process[0])
+                while process:
+                    process.pop()
+            _logger.info("Will Popen with args: %s", pprint.pformat(start_args))
+            process.append(subprocess.Popen(start_args, close_fds=True, cwd='/'))
+            _logger.info("Popen returded process %s", process[0])
             return
 
         if msg['action'] == "CHECK_CHILD":
