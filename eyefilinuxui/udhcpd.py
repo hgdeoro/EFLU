@@ -4,16 +4,11 @@ Created on Mar 2, 2013
 @author: Horacio G. de Oro
 '''
 
-import json
 import logging
 import os
-import pika
-import pprint
-import subprocess
 import uuid
 
 from multiprocessing import Pipe, Process
-from pika.exceptions import AMQPConnectionError
 
 from eyefilinuxui.util import MSG_QUIT, MSG_START, \
     _recv_msg, MSG_GET_PID, _send_amqp_msg, generic_target

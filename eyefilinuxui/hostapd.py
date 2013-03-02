@@ -6,8 +6,6 @@ Created on Mar 2, 2013
 
 import logging
 import os
-import pprint
-import subprocess
 import uuid
 
 from multiprocessing import Pipe, Process
@@ -51,24 +49,6 @@ def hostapd_gen_config(interface, ssid, accepted_mac_list, wpa_passphrase):
     with open(CONFIG_FILE, 'w') as config_file:
         config_file.write(config_contents)
     return CONFIG_FILE
-
-
-#def _generic_target_start(msg, process):
-#    if process:
-#        # FIXME: raise error? stop old process? warn and continue?
-#        logger.warn("A process exists: %s. It will be overriden", process[0])
-#        while process:
-#            process.pop()
-#
-#    with open('/tmp/.eyefi-hostapd.conf', 'r') as config_file:
-#        for line in config_file.readlines():
-#            logger.debug(".eyefi-hostapd.conf >> %s", line.strip())
-#
-#    args = ["sudo", "hostapd", msg['config_file']]
-#    logger.info("Will Popen with args: %s", pprint.pformat(args))
-#    process.append(subprocess.Popen(args, close_fds=True, cwd='/'))
-#    logger.info("Popen returded process %s", process)
-#    return
 
 
 def _generate_test_config():
