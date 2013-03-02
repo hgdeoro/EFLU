@@ -9,7 +9,7 @@ import logging
 from multiprocessing import Process, Pipe
 
 from eyefilinuxui.util import MSG_START, MSG_QUIT
-from eyefilinuxui.hostapd import hostapd, hostapd_gen_config
+from eyefilinuxui.hostapd import start_hostapd, stop_hostapd
 from eyefilinuxui.dhcpd import udhcpd_gen_config, udhcpd
 
 logger = logging.getLogger(__name__)
@@ -21,17 +21,8 @@ def main():
     #===========================================================================
     # hostapd
     #===========================================================================
-    hostapd_parent_conn, hostapd_child_conn = Pipe()
-    hostapd_process = Process(target=hostapd, args=(hostapd_child_conn,))
-    logging.info("Launching child HOSTAPD")
-    hostapd_process.start()
-
-    config_filename = hostapd_gen_config('wlan1', 'som-network-name', ('12:12:12:12:12:12',), 'wifipass')
-
-    hostapd_parent_conn.send({'action': MSG_START,
-        'config_file': config_filename})
-
-    hostapd_parent_conn.send({'action': MSG_QUIT, })
+    start_hostapd()
+    stop_hostapd()
 
     #===========================================================================
     # udhcpd

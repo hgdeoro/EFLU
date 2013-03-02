@@ -18,6 +18,7 @@ LEASE_FILE = '/tmp/.eyefi-udhcpd-leases'
 
 
 def udhcpd_gen_config(start, end, interface, opt_dns, opt_subnet, opt_router, pidfile=PID_FILE, lease_file=LEASE_FILE):
+    """Creates the configuration file"""
     template_filename = os.path.join(os.path.dirname(__file__), 'templates/busybox-udhcpd.conf.template')
     with open(template_filename, 'r') as t:
         template = t.read()
