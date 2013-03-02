@@ -24,14 +24,11 @@ import time
 from datetime import timedelta
 
 import os
-import socket
 import StringIO
 import traceback
-import errno
 
 import hashlib
 import binascii
-import select
 import tarfile
 
 import xml.sax
@@ -44,16 +41,26 @@ import httplib
 
 import SocketServer
 
-import signal
-
 from datetime import datetime
 import ConfigParser
 
 import math
 import logging
+import signal
 
 
 eyeFiLogger = logging.getLogger(__name__)
+
+
+RUNNING = False
+
+
+def stop(*args):
+    global RUNNING
+    RUNNING = False
+
+signal.signal(signal.SIGTERM, stop)
+signal.signal(signal.SIGINT, stop)
 
 
 """
@@ -106,62 +113,12 @@ class EyeFiContentHandler(ContentHandler):
 # Implements an EyeFi server
 class EyeFiServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
 
-    def serve_forever(self):
-        while self.run:
-            try:
-                self.handle_request()
-            except select.error, e:
-                if e[0] != errno.EINTR:
-                    raise e
-
-    def reload_config(self, signum, frame):
-        # FIXME: check this (done to remove uses of sys.argv)
-        raise(Exception("reload_config() doens't works"))
-        #        try:
-        #            configfile = sys.argv[2]
-        #            eyeFiLogger.info("Reloading configuration " + configfile)
-        #            self.config.read(configfile)
-        #        except:
-        #            eyeFiLogger.error("Error reloading configuration")
-
-    def stop_server(self, signum, frame):
-        try:
-            eyeFiLogger.info("Eye-Fi server stopped ")
-            self.stop()
-        except:
-            eyeFiLogger.error("Error stopping server")
-
-    def server_bind(self):
-
-        BaseHTTPServer.HTTPServer.server_bind(self)
+    def __init__(self, *args, **kwargs):
+        BaseHTTPServer.HTTPServer.__init__(self, *args, **kwargs)
         self.socket.settimeout(None)
-        signal.signal(signal.SIGUSR1, self.reload_config)
-        signal.signal(signal.SIGTERM, self.stop_server)
-        signal.signal(signal.SIGINT, self.stop_server)
-        self.run = True
-
-    def get_request(self):
-        while self.run:
-            try:
-                connection, address = self.socket.accept()
-                eyeFiLogger.debug("Incoming connection from client %s" % address[0])
-
-                connection.settimeout(None)
-                return (connection, address)
-
-            except socket.timeout:
-                self.socket.close()
-                pass
-
-    def stop(self):
-        self.run = False
-
-    # alt serve_forever method for python <2.6
-    # because we want a shutdown mech ..
-    #def serve(self):
-    #  while self.run:
-    #    self.handle_request()
-    #  self.socket.close()
+        self.timeout = 1
+        global RUNNING
+        RUNNING = True
 
 
 # This class is responsible for handling HTTP requests passed to it.
@@ -173,12 +130,6 @@ class EyeFiRequestHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     sys_version = ""
     server_version = "Eye-Fi Agent/2.0.4.0 (Windows XP SP2)"
-
-    def do_QUIT(self):
-        eyeFiLogger.debug("Got StopServer request .. stopping server")
-        self.send_response(200)
-        self.end_headers()
-        self.server.stop()
 
     def do_GET(self):
         try:
@@ -705,10 +656,10 @@ class EyeFiRequestHandler(BaseHTTPRequestHandler):
         return doc.toxml(encoding="UTF-8")
 
 
-eyeFiServer = ''
+eyeFiServer = None
 
 
-def runEyeFi(configfile, logfile):
+def runEyeFi(configfile):
 
     # configfile = sys.argv[2]
     eyeFiLogger.info("Reading config " + configfile)
@@ -722,4 +673,6 @@ def runEyeFi(configfile, logfile):
     eyeFiServer = EyeFiServer(server_address, EyeFiRequestHandler)
     eyeFiServer.config = config
     eyeFiLogger.info("Eye-Fi server started listening on port " + str(server_address[1]))
-    eyeFiServer.serve_forever()
+    while RUNNING:
+        eyeFiLogger.debug("eyeFiServer.handle_request()")
+        eyeFiServer.handle_request()

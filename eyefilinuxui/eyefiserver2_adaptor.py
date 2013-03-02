@@ -7,8 +7,7 @@ Created on Mar 2, 2013
 import logging
 import os
 
-from eyefilinuxui.util import generic_start_multiprocess, \
-    generic_mp_stop, MSG_START
+from multiprocessing import Process
 
 from eyefiserver import runEyeFi
 
@@ -50,20 +49,17 @@ def _generate_test_config():
     return eyefiserver2_gen_config('12:12:12:12:12:12', '00000000000000000000000000000000', '/tmp')
 
 
-def _runEyeFi():
-    """Call to the real runEyeFi() function"""
-    runEyeFi(CONFIG_FILE)
-
-
 # FIXME: lock
 def start_eyefiserver2(config_filename):
-    start_args = None
-    action_map = {
-        MSG_START: _runEyeFi,
-    }
-    return generic_start_multiprocess(start_args, action_map, logger, QUEUE_NAME, STATE)
+    process = Process(target=runEyeFi, args=[CONFIG_FILE])
+    logging.info("Starting process EyeFiServer2")
+    process.start()
+    STATE['process'] = process
+    STATE['running'] = True
 
 
 # FIXME: lock
 def stop_eyefiserver2():
-    return generic_mp_stop(logger, QUEUE_NAME, STATE)
+    logging.info("Stopping process EyeFiServer2")
+    STATE['process'].terminate()
+    STATE['running'] = False
