@@ -73,7 +73,6 @@ def _udhcpd_target(conn):
     def callback(ch, method, properties, msg):
         msg = json.loads(msg)
         logger.info("Message received: %s", pprint.pformat(msg))
-        # global process
 
         if msg['action'] == MSG_QUIT:
             closing_connection[0] = True
@@ -122,6 +121,9 @@ def _udhcpd_target(conn):
                     process.pop()
                 else:
                     logger.debug("Popen process %s is running", process[0])
+            return
+
+        logger.error("UNKNOWN MESSAGE: %s", pprint.pformat(msg))
 
     channel.basic_consume(callback, queue=queue_name, no_ack=True)
     conn.send("ACK")
