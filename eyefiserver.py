@@ -23,7 +23,6 @@ import cgi
 import time
 from datetime import timedelta
 
-import sys
 import os
 import socket
 import StringIO
@@ -57,6 +56,8 @@ import ConfigParser
 
 import math
 
+from sys import stderr as sys_stderr, stdout as sys_stdout, stdin as sys_stdin, exit as sys_exit
+
 
 class Daemon:
     """
@@ -70,10 +71,12 @@ class Daemon:
                  stdout='/dev/null',
                  stderr='/dev/null',
                 ):
-        try:
-            self.stderr = sys.argv[3]
-        except:
-            self.stderr = stderr
+        # FIXME: check this (done to remove uses of sys.argv)
+        #        try:
+        #            self.stderr = sys.argv[3]
+        #        except:
+        #            self.stderr = stderr
+        self.stderr = stderr
         self.stdin = stdin
         self.stdout = stdout
         self.pidfile = pidfile
@@ -91,9 +94,9 @@ class Daemon:
 #                            sys.exit(0)
                 return 0
         except OSError, e:
-            sys.stderr.write("fork #1 failed: %d (%s)\n" \
+            sys_stderr.write("fork #1 failed: %d (%s)\n" \
                              % (e.errno, e.strerror))
-            sys.exit(1)
+            sys_exit(1)
 
         # decouple from parent environment
         os.chdir("/")
@@ -108,19 +111,19 @@ class Daemon:
 #                            sys.exit(0)
                 return 1
         except OSError, e:
-            sys.stderr.write("fork #2 failed: %d (%s)\n" \
+            sys_stderr.write("fork #2 failed: %d (%s)\n" \
                              % (e.errno, e.strerror))
-            sys.exit(1)
+            sys_exit(1)
 
         # redirect standard file descriptors
-        sys.stdout.flush()
-        sys.stderr.flush()
+        sys_stdout.flush()
+        sys_stderr.flush()
         si = file(self.stdin, 'r')
         so = file(self.stdout, 'a+')
         se = file(self.stderr, 'a+', 0)
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
+        os.dup2(si.fileno(), sys_stdin.fileno())
+        os.dup2(so.fileno(), sys_stdout.fileno())
+        os.dup2(se.fileno(), sys_stderr.fileno())
 
         # write pidfile
         atexit.register(self.delpid)
@@ -144,7 +147,7 @@ class Daemon:
 
         if pid:
             message = "pidfile %s already exist. Daemon already running?\n"
-            sys.stderr.write(message % self.pidfile)
+            sys_stderr.write(message % self.pidfile)
             return 1
 
         # Start the daemon
@@ -167,7 +170,7 @@ class Daemon:
 
         if not pid:
             message = "pidfile %s does not exist. Daemon not running?\n"
-            sys.stderr.write(message % self.pidfile)
+            sys_stderr.write(message % self.pidfile)
             return 1
 
         # Try killing the daemon process
@@ -182,7 +185,7 @@ class Daemon:
                     os.remove(self.pidfile)
             else:
                 print str(err)
-                sys.exit(1)
+                sys_exit(1)
 
     def restart(self):
         """
@@ -231,7 +234,7 @@ class Daemon:
 
         if not pid:
             message = "pidfile %s does not exist. Daemon not running?\n"
-            sys.stderr.write(message % self.pidfile)
+            sys_stderr.write(message % self.pidfile)
             return 1
 
         # Try killing the daemon process
@@ -254,7 +257,7 @@ class Daemon:
 
         if not pid:
             message = "pidfile %s does not exist. Daemon not running?\n"
-            sys.stderr.write(message % self.pidfile)
+            sys_stderr.write(message % self.pidfile)
             return 1
 
     def run(self):
@@ -285,7 +288,7 @@ URLs.
 eyeFiLogger = logging.Logger("eyeFiLogger", logging.DEBUG)
 
 # Create two handlers. One to print to the log and one to print to the console
-consoleHandler = logging.StreamHandler(sys.stdout)
+consoleHandler = logging.StreamHandler(sys_stdout)
 
 # Set how both handlers will print the pretty log events
 eyeFiLoggingFormat = logging.Formatter("[%(asctime)s][%(funcName)s] - %(message)s", '%m/%d/%y %I:%M%p')
@@ -348,12 +351,14 @@ class EyeFiServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
                     raise e
 
     def reload_config(self, signum, frame):
-        try:
-            configfile = sys.argv[2]
-            eyeFiLogger.info("Reloading configuration " + configfile)
-            self.config.read(configfile)
-        except:
-            eyeFiLogger.error("Error reloading configuration")
+        # FIXME: check this (done to remove uses of sys.argv)
+        raise(Exception("reload_config() doens't works"))
+        #        try:
+        #            configfile = sys.argv[2]
+        #            eyeFiLogger.info("Reloading configuration " + configfile)
+        #            self.config.read(configfile)
+        #        except:
+        #            eyeFiLogger.error("Error reloading configuration")
 
     def stop_server(self, signum, frame):
         try:
@@ -937,33 +942,35 @@ class EyeFiRequestHandler(BaseHTTPRequestHandler):
 
 
 def stopEyeFi():
-    configfile = sys.argv[2]
-    eyeFiLogger.info("Reading config " + configfile)
-
-    config = ConfigParser.SafeConfigParser()
-    config.read(configfile)
-
-    port = config.getint('EyeFiServer', 'host_port')
-
-    """send QUIT request to http server running on localhost:<port>"""
-    conn = httplib.HTTPConnection("127.0.0.1:%d" % port)
-    conn.request("QUIT", "/")
-    conn.getresponse()
+    # FIXME: check this (done to remove uses of sys.argv)
+    #    configfile = sys.argv[2]
+    #    eyeFiLogger.info("Reading config " + configfile)
+    #
+    #    config = ConfigParser.SafeConfigParser()
+    #    config.read(configfile)
+    #
+    #    port = config.getint('EyeFiServer', 'host_port')
+    #
+    #    """send QUIT request to http server running on localhost:<port>"""
+    #    conn = httplib.HTTPConnection("127.0.0.1:%d" % port)
+    #    conn.request("QUIT", "/")
+    #    conn.getresponse()
+    pass
 
 
 eyeFiServer = ''
 
 
-def runEyeFi():
+def runEyeFi(configfile, logfile):
 
-    configfile = sys.argv[2]
+    # configfile = sys.argv[2]
     eyeFiLogger.info("Reading config " + configfile)
 
     config = ConfigParser.SafeConfigParser({'geotag_enable': '0'})
     config.read(configfile)
 
     # open file logging
-    logfile = sys.argv[3]
+    # logfile = sys.argv[3]
     fileHandler = logging.handlers.TimedRotatingFileHandler(logfile, "D", 7, backupCount=7, encoding=None)
     fileHandler.setFormatter(eyeFiLoggingFormat)
     eyeFiLogger.addHandler(fileHandler)
@@ -978,49 +985,49 @@ def runEyeFi():
     eyeFiServer.serve_forever()
 
 
-class MyDaemon(Daemon):
-    def run(self):
-        runEyeFi()
+#class MyDaemon(Daemon):
+#    def run(self):
+#        runEyeFi()
 
 
-def main():
-    pid_file = '/tmp/eyefiserver.pid'
-    result = 0
-    if len(sys.argv) > 2:
-        if 'start' == sys.argv[1]:
-            daemon = MyDaemon(pid_file)
-            result = daemon.start()
-            if result != 1:
-                print "EyeFiServer started"
-        elif 'stop' == sys.argv[1]:
-            daemon = MyDaemon(pid_file)
-            result = daemon.stop()
-            if result != 1:
-                print "EyeFiServer stopped"
-        elif 'restart' == sys.argv[1]:
-            daemon = MyDaemon(pid_file)
-            result = daemon.restart()
-            if result != 1:
-                print "EyeFiServer restarted"
-        elif 'reload' == sys.argv[1]:
-            daemon = MyDaemon(pid_file)
-            result = daemon.reload()
-        elif 'status' == sys.argv[1]:
-            daemon = MyDaemon(pid_file)
-            result = daemon.status()
-            if result == 1:
-                print "EyeFiServer is not running"
-            else:
-                print "EyeFiServer is running"
-        elif 'instance' == sys.argv[1]:
-            runEyeFi()
-        else:
-            print "Unknown command"
-            sys.exit(2)
-        sys.exit(result)
-    else:
-        print "usage: %s start|stop|restart|reload|status|instance conf_file log_file" % sys.argv[0]
-        sys.exit(2)
-
-if __name__ == "__main__":
-    main()
+#def main():
+#    pid_file = '/tmp/eyefiserver.pid'
+#    result = 0
+#    if len(sys.argv) > 2:
+#        if 'start' == sys.argv[1]:
+#            daemon = MyDaemon(pid_file)
+#            result = daemon.start()
+#            if result != 1:
+#                print "EyeFiServer started"
+#        elif 'stop' == sys.argv[1]:
+#            daemon = MyDaemon(pid_file)
+#            result = daemon.stop()
+#            if result != 1:
+#                print "EyeFiServer stopped"
+#        elif 'restart' == sys.argv[1]:
+#            daemon = MyDaemon(pid_file)
+#            result = daemon.restart()
+#            if result != 1:
+#                print "EyeFiServer restarted"
+#        elif 'reload' == sys.argv[1]:
+#            daemon = MyDaemon(pid_file)
+#            result = daemon.reload()
+#        elif 'status' == sys.argv[1]:
+#            daemon = MyDaemon(pid_file)
+#            result = daemon.status()
+#            if result == 1:
+#                print "EyeFiServer is not running"
+#            else:
+#                print "EyeFiServer is running"
+#        elif 'instance' == sys.argv[1]:
+#            runEyeFi()
+#        else:
+#            print "Unknown command"
+#            sys.exit(2)
+#        sys.exit(result)
+#    else:
+#        print "usage: %s start|stop|restart|reload|status|instance conf_file log_file" % sys.argv[0]
+#        sys.exit(2)
+#
+#if __name__ == "__main__":
+#    main()
