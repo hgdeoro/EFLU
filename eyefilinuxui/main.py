@@ -13,7 +13,7 @@ from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd, udhcpd_gen_config
 from eyefilinuxui.networking_setup import nm_check_disconnected,\
     nm_try_disconnect, ifconfig, nm_interface_exists
 from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config,\
-    start_eyefiserver2
+    start_eyefiserver2, stop_eyefiserver2
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +109,8 @@ def main():
     except KeyboardInterrupt:
         stop_hostapd()
         stop_udhcpd()
+        stop_eyefiserver2()
+
 
 if __name__ == '__main__':
     main()
