@@ -69,6 +69,12 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
         msg = json.loads(msg)
         _logger.info("Message received: %s", pprint.pformat(msg))
 
+        if msg['action'] in action_map:
+            func = action_map[msg['action']]
+            assert callable(func)
+            func()
+            return
+
         if msg['action'] == MSG_QUIT:
             closing_connection[0] = True
             if process:
@@ -144,7 +150,7 @@ def generic_start_multiprocess(start_args, action_map, _logger, queue_name, stat
         start_args,
         action_map
     ))
-    _logger.info("Launching child UDHCPD")
+    _logger.info("Launching child...")
     process.start()
 
     _logger.info("Waiting for ACK")
@@ -159,7 +165,7 @@ def generic_start_multiprocess(start_args, action_map, _logger, queue_name, stat
 
 
 def generic_mp_stop(_logger, queue_name, state):
-    _logger.info("Stopping UDHCPD...")
+    _logger.info("Stopping...")
     _send_amqp_msg({'action': MSG_QUIT}, queue_name)
     state['running'] = False
     _logger.info("Waiting for process.join() on pid %s...", state['process'].pid)
