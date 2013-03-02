@@ -19,17 +19,17 @@ ACCEPT_MAC_FILE = '/tmp/.eyefi-hostapd.accept'
 
 STATE = {
     'running': False,
-    'hostapd_parent_conn': None,
-    'hostapd_process': None,
+    'parent_conn': None,
+    'process': None,
 }
 
 
 def _send_msg(msg):
     """Sends a message to the child process"""
     assert STATE['running']
-    assert STATE['hostapd_parent_conn']
-    assert STATE['hostapd_process']
-    STATE['hostapd_parent_conn'].send(msg)
+    assert STATE['parent_conn']
+    assert STATE['process']
+    STATE['parent_conn'].send(msg)
 
 
 def hostapd_gen_config(interface, ssid, accepted_mac_list, wpa_passphrase):
@@ -77,8 +77,8 @@ def start_hostapd():
     hostapd_process.start()
 
     STATE['running'] = True
-    STATE['hostapd_parent_conn'] = hostapd_parent_conn
-    STATE['hostapd_process'] = hostapd_process
+    STATE['parent_conn'] = hostapd_parent_conn
+    STATE['process'] = hostapd_process
 
     config_filename = hostapd_gen_config('wlan1', 'som-network-name', ('12:12:12:12:12:12',), 'wifipass')
 
@@ -90,6 +90,6 @@ def stop_hostapd():
     logger.info("Stopping hostapd...")
     _send_msg({'action': MSG_QUIT})
     STATE['running'] = False
-    logger.info("Waiting for process.join() on pid %s...", STATE['hostapd_process'].pid)
-    STATE['hostapd_process'].join()
-    logger.info("Process exit status: %s", STATE['hostapd_process'].exitcode)
+    logger.info("Waiting for process.join() on pid %s...", STATE['process'].pid)
+    STATE['process'].join()
+    logger.info("Process exit status: %s", STATE['process'].exitcode)
