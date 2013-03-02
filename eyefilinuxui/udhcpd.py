@@ -16,7 +16,7 @@ from multiprocessing import Pipe, Process
 from pika.exceptions import AMQPConnectionError
 
 from eyefilinuxui.util import MSG_QUIT, MSG_START, \
-    _recv_msg, MSG_GET_PID, _send_amqp_msg
+    _recv_msg, MSG_GET_PID, _send_amqp_msg, generic_target
 
 logger = logging.getLogger(__name__)
 
@@ -57,99 +57,40 @@ def udhcpd_gen_config(start, end, interface, opt_dns, opt_subnet, opt_router, pi
     return CONFIG_FILE
 
 
-def _udhcpd_target(conn):
-    logger = logging.getLogger('udhcpd-child')
-    logger.info("Waiting for message...")
-
-    process = []
-    closing_connection = [False]
-
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    channel = connection.channel()
-    channel.exchange_declare(exchange=QUEUE_NAME, type='fanout')
-    result = channel.queue_declare(exclusive=True)
-    queue_name = result.method.queue
-    channel.queue_bind(exchange=QUEUE_NAME, queue=queue_name)
-
-    def callback(ch, method, properties, msg):
-        msg = json.loads(msg)
-        logger.info("Message received: %s", pprint.pformat(msg))
-
-        if msg['action'] == MSG_QUIT:
-            closing_connection[0] = True
-            if process:
-                logging.warn("A process exists: %s", process[0])
-            # FIXME: stop process if exists?
-            while process:
-                process.pop()
-            connection.close()
-            return
-
-        if msg['action'] == MSG_START:
-            if process:
-                # FIXME: raise error? stop old process? warn and continue?
-                logging.warn("A process exists: %s. It will be overriden", process[0])
-                while process:
-                    process.pop()
-            with open(CONFIG_FILE, 'r') as config_file:
-                for line in config_file.readlines():
-                    logger.debug("CONFIG >> %s", line.strip())
-            args = ["sudo", "busybox", "udhcpd", "-f", msg['config_file']]
-            logger.info("Will Popen with args: %s", pprint.pformat(args))
-            process.append(subprocess.Popen(args, close_fds=True, cwd='/'))
-            logger.info("Popen returded process %s", process[0])
-            return
-
-        if msg['action'] == MSG_GET_PID:
-            response = {}
-            if '_uuid' in msg:
-                response['_uuid'] = msg['_uuid']
-            response['pid'] = None
-            if process[0]:
-                response['pid'] = process[0].pid
-
-            # data es sent over 'connection' (Pipe)
-            conn.send(response)
-            return
-
-        if msg['action'] == "CHECK_CHILD":
-            if process:
-                # ret_code = process.wait()
-                process[0].poll()
-                if process[0].returncode is not None:
-                    logger.info("Cleaning up finished Popen process. Exit status: %s", process[0].returncode)
-                    if process[0].returncode != 0:
-                        logger.warn("Exit status != 0")
-                    process[0].wait()
-                    while process:
-                        process.pop()
-                else:
-                    logger.debug("Popen process %s is running", process[0])
-            return
-
-        logger.error("UNKNOWN MESSAGE: %s", pprint.pformat(msg))
-
-    channel.basic_consume(callback, queue=queue_name, no_ack=True)
-    conn.send("ACK")
-    try:
-        channel.start_consuming()
-    except AMQPConnectionError:
-        if closing_connection[0]:
-            logger.info("Ignoring AMQPConnectionError")
-        else:
-            raise
-
-
 def _generate_test_config():
     """Call `start_udhcpd()` with some valid values to generate a config file for testing"""
     return udhcpd_gen_config('10.105.106.100', '10.105.106.199', 'wlan1',
         '10.105.106.2', '255.255.255.0', '10.105.106.2')
 
 
+def _generic_target_start(msg, process):
+    if process:
+        # FIXME: raise error? stop old process? warn and continue?
+        logging.warn("A process exists: %s. It will be overriden", process[0])
+        while process:
+            process.pop()
+    with open(CONFIG_FILE, 'r') as config_file:
+        for line in config_file.readlines():
+            logger.debug("CONFIG >> %s", line.strip())
+    args = ["sudo", "busybox", "udhcpd", "-f", msg['config_file']]
+    logger.info("Will Popen with args: %s", pprint.pformat(args))
+    process.append(subprocess.Popen(args, close_fds=True, cwd='/'))
+    logger.info("Popen returded process %s", process[0])
+    return
+
+
 # FIXME: lock
 def start_udhcpd(config_filename):
     udhcpd_parent_conn, udhcpd_child_conn = Pipe()
-    udhcpd_process = Process(target=_udhcpd_target, args=(udhcpd_child_conn,))
+    args = (
+        udhcpd_child_conn,
+        logger,
+        QUEUE_NAME,
+        {
+            MSG_START: _generic_target_start,
+        }
+    )
+    udhcpd_process = Process(target=generic_target, args=args)
     logging.info("Launching child UDHCPD")
     udhcpd_process.start()
 
