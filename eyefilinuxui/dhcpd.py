@@ -12,26 +12,26 @@ from eyefilinuxui.util import MSG_QUIT, MSG_START
 
 logger = logging.getLogger(__name__)
 
-CONFIG_FILE = '/tmp/.eyefi-hostapd.conf'
-ACCEPT_MAC_FILE = '/tmp/.eyefi-hostapd.accept'
+CONFIG_FILE = '/tmp/.eyefi-udhcpd.conf'
+PID_FILE = '/tmp/.eyefi-udhcpd.pid'
+LEASE_FILE = '/tmp/.eyefi-udhcpd-leases'
 
 
-def hostapd_gen_config(interface, ssid, accepted_mac_list, wpa_passphrase):
-    template_filename = os.path.join(os.path.dirname(__file__), 'templates/hostapd.conf.template')
+def udhcpd_gen_config(start, end, interface, opt_dns, opt_subnet, opt_router, pidfile=PID_FILE, lease_file=LEASE_FILE):
+    template_filename = os.path.join(os.path.dirname(__file__), 'templates/busybox-udhcpd.conf.template')
     with open(template_filename, 'r') as t:
         template = t.read()
 
-    with open(ACCEPT_MAC_FILE, 'w') as accepted_mac_config_file:
-        for mac in accepted_mac_list:
-            accepted_mac_config_file.write(mac)
-            accepted_mac_config_file.write('\n')
-
     # FIXME: sets permissions!
     config_contents = template % {
+        'start': start,
+        'end': end,
         'interface': interface,
-        'ssid': ssid,
-        'wpa_passphrase': wpa_passphrase,
-        'accept_mac_file': ACCEPT_MAC_FILE,
+        'pidfile': pidfile,
+        'lease_file': lease_file,
+        'opt_dns': opt_dns,
+        'opt_subnet': opt_subnet,
+        'opt_router': opt_router,
     }
 
     with open(CONFIG_FILE, 'w') as config_file:
@@ -39,8 +39,8 @@ def hostapd_gen_config(interface, ssid, accepted_mac_list, wpa_passphrase):
     return CONFIG_FILE
 
 
-def hostapd(conn):
-    logger = logging.getLogger('hostapd-child')
+def udhcpd(conn):
+    logger = logging.getLogger('udhcpd-child')
     logger.info("Waiting for message...")
     while True:
         msg = conn.recv()
@@ -49,6 +49,6 @@ def hostapd(conn):
         if msg['action'] == MSG_QUIT:
             break
         if msg['action'] == MSG_START:
-            with open('/tmp/.eyefi-hostapd.conf', 'r') as config_file:
+            with open(CONFIG_FILE, 'r') as config_file:
                 for line in config_file.readlines():
-                    logger.debug(".eyefi-hostapd.conf >> %s", line.strip())
+                    logger.debug("CONFIG >> %s", line.strip())

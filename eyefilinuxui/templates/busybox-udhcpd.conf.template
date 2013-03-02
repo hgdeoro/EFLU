@@ -1,0 +1,11 @@
+start           %(start)s
+end             %(end)s
+
+interface       %(interface)s
+
+pidfile         %(pidfile)s
+lease_file      %(lease_file)s
+
+opt     dns     %(opt_dns)s
+opt     subnet  %(opt_subnet)s
+opt     router  %(opt_router)s
