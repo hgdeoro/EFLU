@@ -17,8 +17,11 @@ class LaunchTest(unittest.TestCase):
         logging.basicConfig(level=logging.DEBUG)
         start_udhcpd()
         pid = get_udhcpd_pid()
-        while pid:
+        count = range(0, 5)
+        while pid and count:
             print "PID >>>", pid
             pid = get_udhcpd_pid()
+            count.pop()
             time.sleep(1)
+
         stop_udhcpd()
