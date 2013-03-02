@@ -39,6 +39,7 @@ def udhcpd_gen_config(start, end, interface, opt_dns, opt_subnet, opt_router, pi
     with open(template_filename, 'r') as t:
         template = t.read()
 
+    # FIXME: create empty lease files
     # FIXME: sets permissions!
     config_contents = template % {
         'start': start,
@@ -139,12 +140,14 @@ def _udhcpd_target(conn):
             raise
 
 
-# FIXME: lock
-def start_udhcpd():
-    # Detect errors earlier...
-    config_filename = udhcpd_gen_config('10.105.106.100', '10.105.106.199', 'wlan1',
+def _generate_test_config():
+    """Call `start_udhcpd()` with some valid values to generate a config file for testing"""
+    return udhcpd_gen_config('10.105.106.100', '10.105.106.199', 'wlan1',
         '10.105.106.2', '255.255.255.0', '10.105.106.2')
 
+
+# FIXME: lock
+def start_udhcpd(config_filename):
     udhcpd_parent_conn, udhcpd_child_conn = Pipe()
     udhcpd_process = Process(target=_udhcpd_target, args=(udhcpd_child_conn,))
     logging.info("Launching child UDHCPD")

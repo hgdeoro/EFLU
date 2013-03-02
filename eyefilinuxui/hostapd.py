@@ -141,11 +141,13 @@ def _hostapd_target(conn):
             raise
 
 
-# FIXME: lock
-def start_hostapd():
-    # Detect errors earlier...
-    config_filename = hostapd_gen_config('wlan1', 'som-network-name', ('12:12:12:12:12:12',), 'wifipass')
+def _generate_test_config():
+    """Call `hostapd_gen_config()` with some valid values to generate a config file for testing"""
+    return hostapd_gen_config('wlan1', 'som-network-name', ('12:12:12:12:12:12',), 'wifipass')
 
+
+# FIXME: lock
+def start_hostapd(config_filename):
     hostapd_parent_conn, hostapd_child_conn = Pipe()
     hostapd_process = Process(target=_hostapd_target, args=(hostapd_child_conn,))
     logging.info("Launching child HOSTAPD")

@@ -8,14 +8,15 @@ import logging
 import time
 import unittest
 
-from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd, get_udhcpd_pid
+from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd, get_udhcpd_pid,\
+    _generate_test_config
 
 
 class LaunchTest(unittest.TestCase):
 
     def test_launch(self):
         logging.basicConfig(level=logging.DEBUG)
-        start_udhcpd()
+        start_udhcpd(_generate_test_config())
         pid = get_udhcpd_pid()
         count = range(0, 5)
         while pid and count:
