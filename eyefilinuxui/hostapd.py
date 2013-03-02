@@ -7,10 +7,12 @@ Created on Mar 2, 2013
 import logging
 import os
 import pprint
+import subprocess
 
 from multiprocessing import Pipe, Process
 
-from eyefilinuxui.util import MSG_QUIT, MSG_START, _send_msg
+from eyefilinuxui.util import MSG_QUIT, MSG_START, _send_msg, MSG_GET_PID,\
+    _recv_msg
 
 logger = logging.getLogger(__name__)
 
@@ -51,15 +53,34 @@ def hostapd_gen_config(interface, ssid, accepted_mac_list, wpa_passphrase):
 def _hostapd_target(conn):
     logger = logging.getLogger('hostapd-child')
     logger.info("Waiting for message...")
+
+    process = None
+
     while True:
-        msg = conn.recv()
-        logger.info("Message received: %s", pprint.pformat(msg))
-        if msg['action'] == MSG_QUIT:
-            break
-        if msg['action'] == MSG_START:
-            with open('/tmp/.eyefi-hostapd.conf', 'r') as config_file:
-                for line in config_file.readlines():
-                    logger.debug(".eyefi-hostapd.conf >> %s", line.strip())
+        if conn.poll(1):
+            # Got a message
+            msg = conn.recv()
+            logger.info("Message received: %s", pprint.pformat(msg))
+            if msg['action'] == MSG_QUIT:
+                break
+            if msg['action'] == MSG_START:
+                with open('/tmp/.eyefi-hostapd.conf', 'r') as config_file:
+                    for line in config_file.readlines():
+                        logger.debug(".eyefi-hostapd.conf >> %s", line.strip())
+
+                args = ["sudo", "hostapd", msg['config_file']]
+                logger.info("Will Popen with args: %s", pprint.pformat(args))
+                process = subprocess.Popen(args, close_fds=True, cwd='/')
+                logger.info("Popen returded process %s", process)
+            if msg['action'] == MSG_GET_PID:
+                response = {}
+                if '_uuid' in msg:
+                    response['_uuid'] = msg['_uuid']
+                response['pid'] = None
+                if process:
+                    response['pid'] = process.pid
+
+                conn.send(response)
 
 
 def start_hostapd():
@@ -85,3 +106,11 @@ def stop_hostapd():
     logger.info("Waiting for process.join() on pid %s...", STATE['process'].pid)
     STATE['process'].join()
     logger.info("Process exit status: %s", STATE['process'].exitcode)
+
+
+# FIXME: lock
+def get_hostapd_pid():
+    """Returns the PID, or None if not running"""
+    msg_uuid = _send_msg(STATE, {'action': MSG_GET_PID})
+    msg = _recv_msg(STATE, msg_uuid=msg_uuid)
+    return msg['pid']
