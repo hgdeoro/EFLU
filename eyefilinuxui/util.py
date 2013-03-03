@@ -203,7 +203,6 @@ EXIF_TAGS = (
     'EXIF ISOSpeedRatings',
     'EXIF DateTimeDigitized',
     'EXIF Flash',
-    'EXIF UserComment',
 )
 
 
@@ -216,7 +215,11 @@ def get_exif_tags(image_filename):
         values = {}
         for tag in EXIF_TAGS:
             if tag in tags:
-                values[tag] = tags[tag]
+                if tag.startswith('EXIF '):
+                    tag_without_exif_prefix = tag[5:]
+                else:
+                    tag_without_exif_prefix = tag
+                values[tag_without_exif_prefix] = tags[tag]
         logger.debug(pprint.pformat(values))
         return values
     except:

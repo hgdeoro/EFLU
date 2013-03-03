@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'eyefilinuxui/gui/ui/mainwindow.ui'
 #
-# Created: Sun Mar  3 16:35:25 2013
+# Created: Sun Mar  3 16:37:25 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.1
 #
 # WARNING! All changes made in this file will be lost!

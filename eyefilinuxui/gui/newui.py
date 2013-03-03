@@ -101,29 +101,30 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
     def display_image(self, image_filename):
         self.image = Image.open(image_filename)
+        self.scene.clear()
+        self.tableWidgetExif.clear()
+        self.tableWidgetExif.setColumnCount(1)
+        self.tableWidgetExif.setHorizontalHeaderLabels(["Value"])
+
+        while self.tableWidgetExif.rowCount():
+            self.tableWidgetExif.removeRow(0)
+
         exif_tags = get_exif_tags(image_filename)
         exif_keys = sorted(exif_tags.keys())
-        self.tableWidgetExif.setColumnCount(2)
-        self.tableWidgetExif.setRowCount(len(exif_tags))
-        self.tableWidgetExif.setHorizontalHeaderLabels(["Value"])
-        self.tableWidgetExif.setVerticalHeaderLabels(exif_keys)
-        for row_num in range(0, len(exif_tags)):
-            tagItem = QtGui.QTableWidgetItem()
-            tagItem.setFlags(tagItem.flags() ^ QtCore.Qt.ItemIsEditable)
-            tagItem.setText(unicode(exif_keys[row_num]))
-            valueItem = QtGui.QTableWidgetItem()
-            valueItem.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
-            valueItem.setFlags(valueItem.flags() ^ QtCore.Qt.ItemIsEditable)
-            valueItem.setText(unicode(exif_tags[exif_keys[row_num]]))
-            # row = self.tableWidgetExif.rowCount()
-            self.tableWidgetExif.insertRow(row_num)
-            self.tableWidgetExif.setItem(row_num, 0, tagItem)
-            self.tableWidgetExif.setItem(row_num, 1, valueItem)
+        if exif_tags:
+            for row_num in range(0, len(exif_tags)):
+                valueItem = QtGui.QTableWidgetItem()
+                valueItem.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
+                valueItem.setFlags(valueItem.flags() ^ QtCore.Qt.ItemIsEditable)
+                valueItem.setText(unicode(exif_tags[exif_keys[row_num]]))
+                self.tableWidgetExif.insertRow(row_num)
+                self.tableWidgetExif.setItem(row_num, 0, valueItem)
+            self.tableWidgetExif.setVerticalHeaderLabels(exif_keys)
+            self.tableWidgetExif.resizeColumnsToContents()
 
         self.statusBar.showMessage("Image: {0}".format(image_filename))
         self.imageQt = ImageQt.ImageQt(self.image)
         self.pixMap = QtGui.QPixmap.fromImage(self.imageQt, QtCore.Qt.ImageConversionFlag.AutoColor)
-        self.scene.clear()
         self.scene.addPixmap(self.pixMap)
         self._do_resize()
 
