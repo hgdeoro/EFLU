@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'eyefilinuxui/gui/ui/mainwindow.ui'
 #
-# Created: Sun Mar  3 19:31:43 2013
+# Created: Sun Mar  3 20:00:17 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -39,6 +39,11 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.tableWidgetExif)
         self.tabWidget.addTab(self.tabExif, "")
         self.verticalLayout.addWidget(self.splitter)
+        self.listWidgetThumbs = QtGui.QListWidget(self.centralWidget)
+        self.listWidgetThumbs.setMaximumSize(QtCore.QSize(16777215, 100))
+        self.listWidgetThumbs.setFlow(QtGui.QListView.LeftToRight)
+        self.listWidgetThumbs.setObjectName("listWidgetThumbs")
+        self.verticalLayout.addWidget(self.listWidgetThumbs)
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtGui.QMenuBar(MainWindow)
         self.menuBar.setGeometry(QtCore.QRect(0, 0, 606, 21))
