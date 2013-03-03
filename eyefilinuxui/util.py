@@ -197,14 +197,28 @@ def generic_mp_get_pid(_logger, queue_name, state):
     return msg['pid']
 
 
+EXIF_TAGS = (
+    'EXIF FNumber',
+    'EXIF ExposureTime',
+    'EXIF ISOSpeedRatings',
+    'EXIF DateTimeDigitized',
+    'EXIF Flash',
+    'EXIF UserComment',
+)
+
+
 def get_exif_tags(image_filename):
     """Returns dict with exif information"""
     try:
         import EXIF
         with open(image_filename, 'rb') as image_file:
             tags = EXIF.process_file(image_file)
-        return dict(tags)
-        logger.debug(pprint.pformat(tags))
+        values = {}
+        for tag in EXIF_TAGS:
+            if tag in tags:
+                values[tag] = tags[tag]
+        logger.debug(pprint.pformat(values))
+        return values
     except:
         logger.exception("Couldn't load exif tags... will return empty dict")
         return {}

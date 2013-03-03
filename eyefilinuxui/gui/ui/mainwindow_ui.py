@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'eyefilinuxui/gui/ui/mainwindow.ui'
 #
-# Created: Sun Mar  3 15:29:09 2013
+# Created: Sun Mar  3 16:35:25 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,10 +30,12 @@ class Ui_MainWindow(object):
         self.tabExif.setObjectName("tabExif")
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.tabExif)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.tableViewExif = QtGui.QTableView(self.tabExif)
-        self.tableViewExif.setBaseSize(QtCore.QSize(200, 100))
-        self.tableViewExif.setObjectName("tableViewExif")
-        self.verticalLayout_2.addWidget(self.tableViewExif)
+        self.tableWidgetExif = QtGui.QTableWidget(self.tabExif)
+        self.tableWidgetExif.setBaseSize(QtCore.QSize(200, 100))
+        self.tableWidgetExif.setObjectName("tableWidgetExif")
+        self.tableWidgetExif.setColumnCount(0)
+        self.tableWidgetExif.setRowCount(0)
+        self.verticalLayout_2.addWidget(self.tableWidgetExif)
         self.tabWidget.addTab(self.tabExif, "")
         self.verticalLayout.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralWidget)
