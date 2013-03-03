@@ -21,7 +21,7 @@ sys.modules['PyQt4'] = PySide # HACK for ImageQt
 import Image
 import ImageQt
 
-from eyefilinuxui.util import EVENT_QUEUE_NAME
+from eyefilinuxui.util import EVENT_QUEUE_NAME, get_exif_tags
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
 
 
@@ -101,6 +101,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
     def display_image(self, image_filename):
         self.image = Image.open(image_filename)
+        exif_tags = get_exif_tags(image_filename)
         self.statusBar.showMessage("Image: {0}".format(image_filename))
         self.imageQt = ImageQt.ImageQt(self.image)
         self.pixMap = QtGui.QPixmap.fromImage(self.imageQt, QtCore.Qt.ImageConversionFlag.AutoColor)

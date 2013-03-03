@@ -3,14 +3,17 @@ Created on Mar 2, 2013
 
 @author: Horacio G. de Oro
 '''
-import uuid
-import pika
 import json
+import logging
+import pika
 import pprint
 import subprocess
+import uuid
 
 from multiprocessing import Process, Pipe
 from pika.exceptions import AMQPConnectionError
+
+logger = logging.getLogger(__name__)
 
 
 MSG_START = 'start'
@@ -192,3 +195,16 @@ def generic_mp_get_pid(_logger, queue_name, state):
 
     msg = _recv_msg(state, msg_uuid=msg_uuid)
     return msg['pid']
+
+
+def get_exif_tags(image_filename):
+    """Returns dict with exif information"""
+    try:
+        import EXIF
+        with open(image_filename, 'rb') as image_file:
+            tags = EXIF.process_file(image_file)
+        return dict(tags)
+        logger.debug(pprint.pformat(tags))
+    except:
+        logger.exception("Couldn't load exif tags... will return empty dict")
+        return {}
