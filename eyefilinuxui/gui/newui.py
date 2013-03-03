@@ -10,33 +10,41 @@ import ImageQt
 
 from PyQt4 import QtCore, QtGui
 
-from eyefilinuxui.gui.ui.mainwindow import Ui_MainWindow
+from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
 
 
 class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
-    def __init__(self):
-        QtGui.QDialog.__init__(self)
-
-        # Set up the user interface from Designer.
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
         self.scene = QtGui.QGraphicsScene()
         self.graphicsView.setScene(self.scene)
-        self.graphicsView.setRenderHint(QtGui.QPainter.Antialiasing)
+        self.image = None
+        self.imageQt = None
+        self.pixMap = None
 
+    def _do_resize(self):
+        if self.image:
+            w, h = self.image.size
+            self.graphicsView.fitInView(QtCore.QRectF(0, 0, w, h), QtCore.Qt.KeepAspectRatio)
+            self.scene.update()
+
+    def resizeEvent(self, event):
+        self._do_resize()
+
+    def display_image(self, image_filename):
+        self.image = Image.open(image_filename)
+        self.imageQt = ImageQt.ImageQt(self.image)
+        self.pixMap = QtGui.QPixmap.fromImage(self.imageQt)
         self.scene.clear()
-        img = Image.open(sys.argv[1])
-        w, h = img.size
-        self.imgQ = ImageQt.ImageQt(img)
-        pixMap = QtGui.QPixmap.fromImage(self.imgQ)
-        self.scene.addPixmap(pixMap)
-        # Qt::KeepAspectRatio -> 1
-        self.graphicsView.fitInView(QtCore.QRectF(0, 0, w, h), 1)
-        self.scene.update()
+        self.scene.addPixmap(self.pixMap)
+        self._do_resize()
 
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    window.display_image(sys.argv[1])
     sys.exit(app.exec_())
