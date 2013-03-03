@@ -29,6 +29,12 @@
        </property>
       </widget>
       <widget class="QTabWidget" name="tabWidget">
+       <property name="maximumSize">
+        <size>
+         <width>300</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="baseSize">
         <size>
          <width>200</width>

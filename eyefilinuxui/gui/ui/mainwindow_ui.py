@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'eyefilinuxui/gui/ui/mainwindow.ui'
 #
-# Created: Sun Mar  3 16:37:25 2013
+# Created: Sun Mar  3 19:31:43 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -24,6 +24,7 @@ class Ui_MainWindow(object):
         self.graphicsView.setBaseSize(QtCore.QSize(800, 100))
         self.graphicsView.setObjectName("graphicsView")
         self.tabWidget = QtGui.QTabWidget(self.splitter)
+        self.tabWidget.setMaximumSize(QtCore.QSize(300, 16777215))
         self.tabWidget.setBaseSize(QtCore.QSize(200, 100))
         self.tabWidget.setObjectName("tabWidget")
         self.tabExif = QtGui.QWidget()
