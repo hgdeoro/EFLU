@@ -93,6 +93,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.connect(self.rabbitmq_reader_thread,
             QtCore.SIGNAL("display_image(QString)"),
             self.display_image)
+        self.connect(self.splitter,
+            QtCore.SIGNAL("splitterMoved(int, int)"),
+            self._do_resize)
         self.rabbitmq_reader_thread.start()
 
     def _do_resize(self):
