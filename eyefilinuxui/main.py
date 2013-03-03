@@ -14,7 +14,7 @@ from eyefilinuxui.networking_setup import nm_check_disconnected,\
     nm_try_disconnect, ifconfig, nm_interface_exists, iptables
 from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config,\
     start_eyefiserver2, stop_eyefiserver2
-from eyefilinuxui.gui.main import start_gui
+from eyefilinuxui.gui.newui import start_gui
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +107,8 @@ def main():
     start_eyefiserver2(eyefiserver2_config)
 
     try:
-        qt_app = start_gui()
+        qt_app, _ = start_gui()
+        qt_app.exec_()
         logging.warn("")
         logging.warn("")
         logging.warn("")
