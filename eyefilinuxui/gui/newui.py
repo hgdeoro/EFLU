@@ -101,6 +101,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
     def display_image(self, image_filename):
         self.image = Image.open(image_filename)
+        self.statusBar.showMessage("Image: {0}".format(image_filename))
         self.imageQt = ImageQt.ImageQt(self.image)
         self.pixMap = QtGui.QPixmap.fromImage(self.imageQt, QtCore.Qt.ImageConversionFlag.AutoColor)
         self.scene.clear()
