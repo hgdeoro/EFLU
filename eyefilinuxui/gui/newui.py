@@ -92,13 +92,22 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
         # Create thread and connect
         self.rabbitmq_reader_thread = RabbitMQEventReaderThread()
+
         self.connect(self.rabbitmq_reader_thread,
             QtCore.SIGNAL("display_image(QString)"),
             self.display_image)
+
         self.connect(self.splitter,
             QtCore.SIGNAL("splitterMoved(int, int)"),
             self._do_resize)
+
+        self.listWidgetThumbs.currentItemChanged.connect(self._show_old_image)
+
         self.rabbitmq_reader_thread.start()
+
+    def _show_old_image(self, current, previous):
+        img_list = self.thumbs[self.listWidgetThumbs.currentRow()]
+        self.display_image(img_list[0], add_to_thumb_list=False)
 
     def _do_resize(self):
         if self.image:
@@ -109,7 +118,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     def resizeEvent(self, event):
         self._do_resize()
 
-    def display_image(self, image_filename):
+    def display_image(self, image_filename, add_to_thumb_list=True):
         self.image = Image.open(image_filename)
         self.scene.clear()
         self.tableWidgetExif.clear()
@@ -166,13 +175,14 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.scene.addPixmap(self.pixMap)
         self.graphicsView.rotate(self.image_rotate)
 
-        thumb_item = QtGui.QListWidgetItem()
-        icon = QtGui.QIcon(self.pixMap)
-        thumb_item.setIcon(icon)
-        self.listWidgetThumbs.addItem(thumb_item)
-        self.thumbs.append(
-            (self.image, self.imageQt, self.pixMap, icon)
-        )
+        if add_to_thumb_list:
+            thumb_item = QtGui.QListWidgetItem()
+            icon = QtGui.QIcon(self.pixMap)
+            thumb_item.setIcon(icon)
+            self.listWidgetThumbs.addItem(thumb_item)
+            self.thumbs.append(
+                (image_filename, self.image, self.imageQt, self.pixMap, icon)
+            )
 
         self._do_resize()
 
