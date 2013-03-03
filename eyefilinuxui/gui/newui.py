@@ -5,13 +5,24 @@ Created on Mar 2, 2013
 '''
 
 import sys
+
+import PySide
+from PySide import QtCore, QtGui
+
+# http://stackoverflow.com/questions/13302908/better-way-of-going-from-pil-to-pyside-qimage
+sys.modules['PyQt4'] = PySide # HACK for ImageQt
+
 import Image
 import ImageQt
 
-from PyQt4 import QtCore, QtGui
-
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
 
+
+#
+# To build:
+#
+# $ pyside-uic eyefilinuxui/gui/ui/mainwindow.ui > eyefilinuxui/gui/ui/mainwindow_ui.py
+#
 
 class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -36,7 +47,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
     def display_image(self, image_filename):
         self.image = Image.open(image_filename)
         self.imageQt = ImageQt.ImageQt(self.image)
-        self.pixMap = QtGui.QPixmap.fromImage(self.imageQt)
+        self.pixMap = QtGui.QPixmap.fromImage(self.imageQt, QtCore.Qt.ImageConversionFlag.AutoColor)
         self.scene.clear()
         self.scene.addPixmap(self.pixMap)
         self._do_resize()
