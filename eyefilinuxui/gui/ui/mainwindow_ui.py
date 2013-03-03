@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'eyefilinuxui/gui/ui/mainwindow.ui'
 #
-# Created: Sun Mar  3 13:04:36 2013
+# Created: Sun Mar  3 15:29:09 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,14 +12,30 @@ from PySide import QtCore, QtGui
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(606, 525)
+        MainWindow.resize(606, 419)
         self.centralWidget = QtGui.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
         self.verticalLayout = QtGui.QVBoxLayout(self.centralWidget)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.graphicsView = QtGui.QGraphicsView(self.centralWidget)
+        self.splitter = QtGui.QSplitter(self.centralWidget)
+        self.splitter.setOrientation(QtCore.Qt.Horizontal)
+        self.splitter.setObjectName("splitter")
+        self.graphicsView = QtGui.QGraphicsView(self.splitter)
+        self.graphicsView.setBaseSize(QtCore.QSize(800, 100))
         self.graphicsView.setObjectName("graphicsView")
-        self.verticalLayout.addWidget(self.graphicsView)
+        self.tabWidget = QtGui.QTabWidget(self.splitter)
+        self.tabWidget.setBaseSize(QtCore.QSize(200, 100))
+        self.tabWidget.setObjectName("tabWidget")
+        self.tabExif = QtGui.QWidget()
+        self.tabExif.setObjectName("tabExif")
+        self.verticalLayout_2 = QtGui.QVBoxLayout(self.tabExif)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.tableViewExif = QtGui.QTableView(self.tabExif)
+        self.tableViewExif.setBaseSize(QtCore.QSize(200, 100))
+        self.tableViewExif.setObjectName("tableViewExif")
+        self.verticalLayout_2.addWidget(self.tableViewExif)
+        self.tabWidget.addTab(self.tabExif, "")
+        self.verticalLayout.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtGui.QMenuBar(MainWindow)
         self.menuBar.setGeometry(QtCore.QRect(0, 0, 606, 21))
@@ -33,8 +49,10 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusBar)
 
         self.retranslateUi(MainWindow)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "MainWindow", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabExif), QtGui.QApplication.translate("MainWindow", "Exif", None, QtGui.QApplication.UnicodeUTF8))
 

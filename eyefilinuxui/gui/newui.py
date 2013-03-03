@@ -81,6 +81,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.imageQt = None
         self.pixMap = None
 
+        self.resize(800, 600)
+
         # Create thread and connect
         self.rabbitmq_reader_thread = RabbitMQEventReaderThread()
         self.connect(self.rabbitmq_reader_thread,
