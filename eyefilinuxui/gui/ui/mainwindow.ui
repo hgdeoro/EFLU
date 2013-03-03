@@ -14,67 +14,70 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QSplitter" name="splitter">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QSplitter" name="splitter_2">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QGraphicsView" name="graphicsView">
-       <property name="baseSize">
-        <size>
-         <width>800</width>
-         <height>100</height>
-        </size>
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
-      </widget>
-      <widget class="QTabWidget" name="tabWidget">
-       <property name="maximumSize">
-        <size>
-         <width>300</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="baseSize">
-        <size>
-         <width>200</width>
-         <height>100</height>
-        </size>
-       </property>
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <widget class="QWidget" name="tabExif">
-        <attribute name="title">
-         <string>Exif</string>
-        </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QTableWidget" name="tableWidgetExif">
-           <property name="baseSize">
-            <size>
-             <width>200</width>
-             <height>100</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-        </layout>
+       <widget class="QGraphicsView" name="graphicsView">
+        <property name="baseSize">
+         <size>
+          <width>800</width>
+          <height>100</height>
+         </size>
+        </property>
+       </widget>
+       <widget class="QTabWidget" name="tabWidget">
+        <property name="maximumSize">
+         <size>
+          <width>300</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="baseSize">
+         <size>
+          <width>200</width>
+          <height>100</height>
+         </size>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="tabExif">
+         <attribute name="title">
+          <string>Exif</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QTableWidget" name="tableWidgetExif">
+            <property name="baseSize">
+             <size>
+              <width>200</width>
+              <height>100</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </widget>
-     </widget>
-    </item>
-    <item>
-     <widget class="QListWidget" name="listWidgetThumbs">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>100</height>
-       </size>
-      </property>
-      <property name="flow">
-       <enum>QListView::LeftToRight</enum>
-      </property>
+      <widget class="QListWidget" name="listWidgetThumbs">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>100</height>
+        </size>
+       </property>
+       <property name="flow">
+        <enum>QListView::LeftToRight</enum>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>

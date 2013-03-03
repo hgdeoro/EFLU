@@ -88,6 +88,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.resize(800, 600)
         self.splitter.setSizes([600, 180])
         self.listWidgetThumbs.setIconSize(QtCore.QSize(100, 100))
+        self.thumbs = []
 
         # Create thread and connect
         self.rabbitmq_reader_thread = RabbitMQEventReaderThread()
@@ -166,8 +167,12 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.graphicsView.rotate(self.image_rotate)
 
         thumb_item = QtGui.QListWidgetItem()
-        thumb_item.setIcon(QtGui.QIcon(self.pixMap))
+        icon = QtGui.QIcon(self.pixMap)
+        thumb_item.setIcon(icon)
         self.listWidgetThumbs.addItem(thumb_item)
+        self.thumbs.append(
+            (self.image, self.imageQt, self.pixMap, icon)
+        )
 
         self._do_resize()
 

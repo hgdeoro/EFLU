@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'eyefilinuxui/gui/ui/mainwindow.ui'
 #
-# Created: Sun Mar  3 20:00:17 2013
+# Created: Sun Mar  3 20:02:21 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -15,9 +15,12 @@ class Ui_MainWindow(object):
         MainWindow.resize(606, 419)
         self.centralWidget = QtGui.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
-        self.verticalLayout = QtGui.QVBoxLayout(self.centralWidget)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.splitter = QtGui.QSplitter(self.centralWidget)
+        self.gridLayout = QtGui.QGridLayout(self.centralWidget)
+        self.gridLayout.setObjectName("gridLayout")
+        self.splitter_2 = QtGui.QSplitter(self.centralWidget)
+        self.splitter_2.setOrientation(QtCore.Qt.Vertical)
+        self.splitter_2.setObjectName("splitter_2")
+        self.splitter = QtGui.QSplitter(self.splitter_2)
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
         self.graphicsView = QtGui.QGraphicsView(self.splitter)
@@ -38,12 +41,11 @@ class Ui_MainWindow(object):
         self.tableWidgetExif.setRowCount(0)
         self.verticalLayout_2.addWidget(self.tableWidgetExif)
         self.tabWidget.addTab(self.tabExif, "")
-        self.verticalLayout.addWidget(self.splitter)
-        self.listWidgetThumbs = QtGui.QListWidget(self.centralWidget)
+        self.listWidgetThumbs = QtGui.QListWidget(self.splitter_2)
         self.listWidgetThumbs.setMaximumSize(QtCore.QSize(16777215, 100))
         self.listWidgetThumbs.setFlow(QtGui.QListView.LeftToRight)
         self.listWidgetThumbs.setObjectName("listWidgetThumbs")
-        self.verticalLayout.addWidget(self.listWidgetThumbs)
+        self.gridLayout.addWidget(self.splitter_2, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtGui.QMenuBar(MainWindow)
         self.menuBar.setGeometry(QtCore.QRect(0, 0, 606, 21))
