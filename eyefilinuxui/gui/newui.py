@@ -25,13 +25,16 @@ from eyefilinuxui.util import EVENT_QUEUE_NAME, get_exif_tags
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
 
 
+logger = logging.getLogger(__name__)
+
+
 class RabbitMQEventReaderThread(QtCore.QThread):
 
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
 
     def callback(self, ch, method, properties, msg):
-        logging.info("MSG recibido: %s", msg)
+        logger.info("MSG recibido: %s", msg)
         msg = json.loads(msg)
         if msg['origin'] == 'eyefiserver' and msg['type'] == 'upload' and msg['extra']:
             if 'filename' in msg['extra']:
@@ -80,6 +83,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.image = None
         self.imageQt = None
         self.pixMap = None
+        self.image_rotate = 0
 
         self.resize(800, 600)
 
@@ -105,22 +109,48 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.tableWidgetExif.clear()
         self.tableWidgetExif.setColumnCount(1)
         self.tableWidgetExif.setHorizontalHeaderLabels(["Value"])
+        self.image_rotate = 0
 
         while self.tableWidgetExif.rowCount():
             self.tableWidgetExif.removeRow(0)
 
-        exif_tags = get_exif_tags(image_filename)
-        exif_keys = sorted(exif_tags.keys())
-        if exif_tags:
-            for row_num in range(0, len(exif_tags)):
+        exif_dict_to_show, other_dict = get_exif_tags(image_filename)
+        exif_keys = sorted(exif_dict_to_show.keys())
+        if exif_dict_to_show:
+            for row_num in range(0, len(exif_dict_to_show)):
                 valueItem = QtGui.QTableWidgetItem()
                 valueItem.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
                 valueItem.setFlags(valueItem.flags() ^ QtCore.Qt.ItemIsEditable)
-                valueItem.setText(unicode(exif_tags[exif_keys[row_num]]))
+                valueItem.setText(unicode(exif_dict_to_show[exif_keys[row_num]]))
                 self.tableWidgetExif.insertRow(row_num)
                 self.tableWidgetExif.setItem(row_num, 0, valueItem)
             self.tableWidgetExif.setVerticalHeaderLabels(exif_keys)
             self.tableWidgetExif.resizeColumnsToContents()
+
+            #    In [21]: y = x['Image Orientation']
+            #
+            #    In [22]: EXIF.EXIF_TAGS[y.tag]
+            #    Out[22]:
+            #    ('Orientation',
+            #     {1: 'Horizontal (normal)',
+            #      2: 'Mirrored horizontal',
+            #      3: 'Rotated 180',
+            #      4: 'Mirrored vertical',
+            #      5: 'Mirrored horizontal then rotated 90 CCW',
+            #      6: 'Rotated 90 CW',
+            #      7: 'Mirrored horizontal then rotated 90 CW',
+            #      8: 'Rotated 90 CCW'})
+            try:
+                if 'Image Orientation' in other_dict:
+                    image_orientation = other_dict['Image Orientation'].values[0]
+                    if image_orientation == 3:
+                        self.image_rotate = 180
+                    elif image_orientation == 6:
+                        self.image_rotate = -90
+                    elif image_orientation == 8:
+                        self.image_rotate = 90
+            except:
+                logger.exception("Couldn't get orientation from EXIF")
 
         self.statusBar.showMessage("Image: {0}".format(image_filename))
         self.imageQt = ImageQt.ImageQt(self.image)

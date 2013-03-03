@@ -207,21 +207,24 @@ EXIF_TAGS = (
 
 
 def get_exif_tags(image_filename):
-    """Returns dict with exif information"""
+    """Returns a dict with exif information to show, and a second dict with the other tags"""
     try:
         import EXIF
         with open(image_filename, 'rb') as image_file:
             tags = EXIF.process_file(image_file)
-        values = {}
-        for tag in EXIF_TAGS:
-            if tag in tags:
-                if tag.startswith('EXIF '):
-                    tag_without_exif_prefix = tag[5:]
+        to_show = {}
+        other = {}
+        for k, v in tags.iteritems():
+            if k in EXIF_TAGS:
+                if k.startswith('EXIF '):
+                    tag_without_exif_prefix = k[5:]
                 else:
-                    tag_without_exif_prefix = tag
-                values[tag_without_exif_prefix] = tags[tag]
-        logger.debug(pprint.pformat(values))
-        return values
+                    tag_without_exif_prefix = k
+                to_show[tag_without_exif_prefix] = v
+            else:
+                other[k] = v
+        logger.debug(pprint.pformat(to_show))
+        return to_show, other
     except:
         logger.exception("Couldn't load exif tags... will return empty dict")
-        return {}
+        return {}, {}
