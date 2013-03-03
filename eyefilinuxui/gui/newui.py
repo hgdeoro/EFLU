@@ -86,6 +86,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.image_rotate = 0
 
         self.resize(800, 600)
+        self.splitter.setSizes([600, 180])
 
         # Create thread and connect
         self.rabbitmq_reader_thread = RabbitMQEventReaderThread()
