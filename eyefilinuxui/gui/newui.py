@@ -110,6 +110,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.tableWidgetExif.setColumnCount(1)
         self.tableWidgetExif.setHorizontalHeaderLabels(["Value"])
         self.image_rotate = 0
+        self.graphicsView.resetTransform()
+        self.graphicsView.resetMatrix()
 
         while self.tableWidgetExif.rowCount():
             self.tableWidgetExif.removeRow(0)
@@ -146,9 +148,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
                     if image_orientation == 3:
                         self.image_rotate = 180
                     elif image_orientation == 6:
-                        self.image_rotate = -90
-                    elif image_orientation == 8:
                         self.image_rotate = 90
+                    elif image_orientation == 8:
+                        self.image_rotate = -90
             except:
                 logger.exception("Couldn't get orientation from EXIF")
 
@@ -156,6 +158,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.imageQt = ImageQt.ImageQt(self.image)
         self.pixMap = QtGui.QPixmap.fromImage(self.imageQt, QtCore.Qt.ImageConversionFlag.AutoColor)
         self.scene.addPixmap(self.pixMap)
+        self.graphicsView.rotate(self.image_rotate)
         self._do_resize()
 
 
