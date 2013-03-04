@@ -21,6 +21,7 @@ class RabbitMQEventReaderThread(QtCore.QThread):
 
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
+        self.consuming = False
 
     def callback(self, ch, method, properties, msg):
         logger.info("MSG recibido: %s", msg)
@@ -51,6 +52,7 @@ class RabbitMQEventReaderThread(QtCore.QThread):
 
         channel.basic_consume(self.callback, queue=_queue_name, no_ack=True)
         try:
+            self.consuming = True
             channel.start_consuming()
         except AMQPConnectionError:
             raise
