@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'eyefilinuxui/gui/ui/mainwindow.ui'
 #
-# Created: Mon Mar  4 16:44:27 2013
+# Created: Mon Mar  4 18:13:56 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -36,9 +36,28 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.tableWidgetExif = QtGui.QTableWidget(self.tabExif)
         self.tableWidgetExif.setBaseSize(QtCore.QSize(200, 100))
+        self.tableWidgetExif.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.tableWidgetExif.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.tableWidgetExif.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.tableWidgetExif.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.tableWidgetExif.setShowGrid(False)
+        self.tableWidgetExif.setWordWrap(False)
+        self.tableWidgetExif.setRowCount(5)
+        self.tableWidgetExif.setColumnCount(1)
         self.tableWidgetExif.setObjectName("tableWidgetExif")
-        self.tableWidgetExif.setColumnCount(0)
-        self.tableWidgetExif.setRowCount(0)
+        self.tableWidgetExif.setColumnCount(1)
+        self.tableWidgetExif.setRowCount(5)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetExif.setItem(0, 0, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetExif.setItem(1, 0, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetExif.setItem(2, 0, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetExif.setItem(3, 0, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetExif.setItem(4, 0, item)
+        self.tableWidgetExif.verticalHeader().setVisible(True)
         self.verticalLayout_2.addWidget(self.tableWidgetExif)
         self.tabWidget.addTab(self.tabExif, "")
         self.listWidgetThumbs = QtGui.QListWidget(self.splitter_2)
@@ -71,6 +90,14 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "EyeFiLinuxUi", None, QtGui.QApplication.UnicodeUTF8))
+        __sortingEnabled = self.tableWidgetExif.isSortingEnabled()
+        self.tableWidgetExif.setSortingEnabled(False)
+        self.tableWidgetExif.item(0, 0).setText(QtGui.QApplication.translate("MainWindow", "abc", None, QtGui.QApplication.UnicodeUTF8))
+        self.tableWidgetExif.item(1, 0).setText(QtGui.QApplication.translate("MainWindow", "abc", None, QtGui.QApplication.UnicodeUTF8))
+        self.tableWidgetExif.item(2, 0).setText(QtGui.QApplication.translate("MainWindow", "abc", None, QtGui.QApplication.UnicodeUTF8))
+        self.tableWidgetExif.item(3, 0).setText(QtGui.QApplication.translate("MainWindow", "abc", None, QtGui.QApplication.UnicodeUTF8))
+        self.tableWidgetExif.item(4, 0).setText(QtGui.QApplication.translate("MainWindow", "abc", None, QtGui.QApplication.UnicodeUTF8))
+        self.tableWidgetExif.setSortingEnabled(__sortingEnabled)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabExif), QtGui.QApplication.translate("MainWindow", "Exif", None, QtGui.QApplication.UnicodeUTF8))
         self.menuFile.setTitle(QtGui.QApplication.translate("MainWindow", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.action_Quit.setText(QtGui.QApplication.translate("MainWindow", "&Quit", None, QtGui.QApplication.UnicodeUTF8))

@@ -213,7 +213,7 @@ def get_tags_to_show(tags):
     """Returns a dict with exif information to show"""
     to_show = OrderedDict()
     for tag_name in EXIF_TAGS.keys():
-        to_show[EXIF_TAGS[tag_name]] = tags[tag_name]
+        to_show[EXIF_TAGS[tag_name]] = tags.get(tag_name, '-')
     return to_show
 
 

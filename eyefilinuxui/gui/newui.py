@@ -53,10 +53,14 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.splitter.setSizes([600, 180])
         self.listWidgetThumbs.setIconSize(QtCore.QSize(100, 100))
 
+        self.tableWidgetExif.verticalHeader().setResizeMode(QtGui.QHeaderView.Fixed)
+
         # Create thread and connect
         self.rabbitmq_reader_thread = RabbitMQEventReaderThread()
         self.rabbitmq_reader_thread.start()
 
+        # self.clear_exif()
+        self.update_exif(None)
         self._connect_signals()
 
     def resizeEvent(self, event):
@@ -87,32 +91,40 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             self.graphicsView.fitInView(QtCore.QRectF(0, 0, w, h), QtCore.Qt.KeepAspectRatio)
             self.scene.update()
 
-    def update_exif(self, image_filename):
-        """Updates the EXIF information, updates `image_rotate`"""
+    def clear_exif(self):
         self.tableWidgetExif.clear()
         self.tableWidgetExif.setColumnCount(1)
         self.tableWidgetExif.setHorizontalHeaderLabels(["Value"])
-        self.current_image_rotate = 0
 
         # FIXME: clean with one call (don't know how)
         while self.tableWidgetExif.rowCount():
             self.tableWidgetExif.removeRow(0)
 
-        self.current_image_exif = get_exif_tags(image_filename)
+    def update_exif(self, image_filename):
+        """Updates the EXIF information, updates `image_rotate`"""
+        self.clear_exif()
+        self.current_image_rotate = 0
+        if image_filename:
+            self.current_image_exif = get_exif_tags(image_filename)
+        else:
+            self.current_image_exif = {}
 
-        if self.current_image_exif:
-            exif_dict_to_show = get_tags_to_show(self.current_image_exif)
-            exif_keys = sorted(exif_dict_to_show.keys())
-            for row_num in range(0, len(exif_dict_to_show)):
-                valueItem = QtGui.QTableWidgetItem()
-                valueItem.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
-                valueItem.setFlags(valueItem.flags() ^ QtCore.Qt.ItemIsEditable)
-                valueItem.setText(unicode(exif_dict_to_show[exif_keys[row_num]]))
-                self.tableWidgetExif.insertRow(row_num)
-                self.tableWidgetExif.setItem(row_num, 0, valueItem)
-            self.tableWidgetExif.setVerticalHeaderLabels(exif_keys)
-            self.tableWidgetExif.resizeColumnsToContents()
-            self.current_image_rotate = how_much_rotate(self.current_image_exif)
+        exif_dict_to_show = get_tags_to_show(self.current_image_exif)
+        # exif_keys = exif_dict_to_show.keys()
+        # for row_num in range(0, len(exif_dict_to_show)):
+        row_num = 0
+        for _, tag_value in exif_dict_to_show.iteritems():
+            valueItem = QtGui.QTableWidgetItem()
+            valueItem.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
+            valueItem.setFlags(valueItem.flags() ^ QtCore.Qt.ItemIsEditable)
+            valueItem.setText(unicode(tag_value))
+            self.tableWidgetExif.insertRow(row_num)
+            self.tableWidgetExif.setItem(row_num, 0, valueItem)
+            row_num += 1
+
+        self.tableWidgetExif.setVerticalHeaderLabels(exif_dict_to_show.keys())
+        self.tableWidgetExif.resizeColumnsToContents()
+        self.current_image_rotate = how_much_rotate(self.current_image_exif) or 0
 
     def add_current_image_to_thumb_list(self):
         thumb_item = QtGui.QListWidgetItem()
