@@ -38,12 +38,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
         # Hold references to current image
         self.current_image_filename = None
-        self.image = None
-        self.imageQt = None
-        self.pixMap = None
-
-        # How much (if any) to rotate the current image
-        self.image_rotate = 0
+        self.current_image = None
+        self.current_image_qt = None
+        self.current_pixmap = None
+        self.current_image_rotate = 0 # How much (if any) to rotate the current image
+        # self.current_image_exif
 
         # Hold references to thumbs
         self.thumbs = []
@@ -83,8 +82,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.display_image(img_list[0], add_to_thumb_list=False)
 
     def _resize_current_image(self):
-        if self.image:
-            w, h = self.image.size
+        if self.current_image:
+            w, h = self.current_image.size
             self.graphicsView.fitInView(QtCore.QRectF(0, 0, w, h), QtCore.Qt.KeepAspectRatio)
             self.scene.update()
 
@@ -93,7 +92,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.tableWidgetExif.clear()
         self.tableWidgetExif.setColumnCount(1)
         self.tableWidgetExif.setHorizontalHeaderLabels(["Value"])
-        self.image_rotate = 0
+        self.current_image_rotate = 0
 
         # FIXME: clean with one call (don't know how)
         while self.tableWidgetExif.rowCount():
@@ -128,40 +127,44 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             try:
                 if 'Image Orientation' in other_dict:
                     image_orientation = other_dict['Image Orientation'].values[0]
-                    if image_orientation == 3:
-                        self.image_rotate = 180
+                    if image_orientation == 1:
+                        pass
+                    elif image_orientation == 3:
+                        self.current_image_rotate = 180
                     elif image_orientation == 6:
-                        self.image_rotate = 90
+                        self.current_image_rotate = 90
                     elif image_orientation == 8:
-                        self.image_rotate = -90
+                        self.current_image_rotate = -90
+                    else:
+                        logger.warn("Unknown 'Image Orientation' value: %s", image_orientation)
             except:
                 logger.exception("Couldn't get orientation from EXIF")
 
     def add_current_image_to_thumb_list(self):
         thumb_item = QtGui.QListWidgetItem()
-        icon = QtGui.QIcon(self.pixMap)
+        icon = QtGui.QIcon(self.current_pixmap)
         thumb_item.setIcon(icon)
         self.listWidgetThumbs.addItem(thumb_item)
         self.thumbs.append(
-            (self.current_image_filename, self.image, self.imageQt, self.pixMap, icon)
+            (self.current_image_filename, self.current_image, self.current_image_qt, self.current_pixmap, icon)
         )
 
     def display_image(self, image_filename, add_to_thumb_list=True):
         self.current_image_filename = image_filename
-        self.image = Image.open(self.current_image_filename)
+        self.current_image = Image.open(self.current_image_filename)
         self.scene.clear()
         self.graphicsView.resetTransform()
         self.graphicsView.resetMatrix()
 
         self.statusBar.showMessage("Image: {0}".format(self.current_image_filename))
-        self.imageQt = ImageQt.ImageQt(self.image)
-        self.pixMap = QtGui.QPixmap.fromImage(self.imageQt, QtCore.Qt.ImageConversionFlag.AutoColor)
-        self.scene.addPixmap(self.pixMap)
+        self.current_image_qt = ImageQt.ImageQt(self.current_image)
+        self.current_pixmap = QtGui.QPixmap.fromImage(self.current_image_qt, QtCore.Qt.ImageConversionFlag.AutoColor)
+        self.scene.addPixmap(self.current_pixmap)
 
         self.update_exif(self.current_image_filename)
 
-        if self.image_rotate != 0:
-            self.graphicsView.rotate(self.image_rotate) # update_exif() updates `image_rotate`
+        if self.current_image_rotate != 0:
+            self.graphicsView.rotate(self.current_image_rotate) # update_exif() updates `image_rotate`
 
         if add_to_thumb_list:
             self.add_current_image_to_thumb_list()
