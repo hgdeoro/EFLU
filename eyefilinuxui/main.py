@@ -10,9 +10,9 @@ import time
 
 from eyefilinuxui.hostapd import start_hostapd, stop_hostapd, hostapd_gen_config
 from eyefilinuxui.udhcpd import start_udhcpd, stop_udhcpd, udhcpd_gen_config
-from eyefilinuxui.networking_setup import nm_check_disconnected,\
+from eyefilinuxui.networking_setup import nm_check_disconnected, \
     nm_try_disconnect, ifconfig, nm_interface_exists, iptables
-from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config,\
+from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config, \
     start_eyefiserver2, stop_eyefiserver2
 from eyefilinuxui.gui.newui import start_gui
 
@@ -69,8 +69,8 @@ def main():
     if args.eyefi_mac not in macs:
         macs.append(args.eyefi_mac)
     for mac in macs:
-        if len(mac.split(':')) != 6:
-            parser.error("Invalid MAC: '{0}' - Use: xx:xx:xx:xx:xx:xx format".format(mac))
+        if len(mac.split(':')) != 6 or list(set([len(x) for x in mac.split(':')])) != [2]:
+            parser.error("Invalid MAC: '{0}' - Use `xx:xx:xx:xx:xx:xx` format".format(mac))
     hostapd_config_filename = hostapd_gen_config(
         args.interface,
         args.wifi_ssid,
