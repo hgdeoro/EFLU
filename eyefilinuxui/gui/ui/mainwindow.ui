@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>606</width>
-    <height>419</height>
+    <height>477</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -120,6 +120,66 @@
              </property>
             </item>
            </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tabStatus">
+         <attribute name="title">
+          <string>Status</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QCheckBox" name="status_checkBox_rabbitmq">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>RabbitMQ (?)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="status_checkBox_hostapd">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>HostAPd (?)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="status_checkBox_udhcpd">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>uDHCPd (?)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="status_checkBox_eyefiserver2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>EyeFiServer2 (?)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'eyefilinuxui/gui/ui/mainwindow.ui'
 #
-# Created: Mon Mar  4 18:13:56 2013
+# Created: Mon Mar  4 19:16:51 2013
 #      by: pyside-uic 0.2.13 running on PySide 1.1.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(606, 419)
+        MainWindow.resize(606, 477)
         self.centralWidget = QtGui.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
         self.gridLayout = QtGui.QGridLayout(self.centralWidget)
@@ -60,6 +60,29 @@ class Ui_MainWindow(object):
         self.tableWidgetExif.verticalHeader().setVisible(True)
         self.verticalLayout_2.addWidget(self.tableWidgetExif)
         self.tabWidget.addTab(self.tabExif, "")
+        self.tabStatus = QtGui.QWidget()
+        self.tabStatus.setObjectName("tabStatus")
+        self.verticalLayout = QtGui.QVBoxLayout(self.tabStatus)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.status_checkBox_rabbitmq = QtGui.QCheckBox(self.tabStatus)
+        self.status_checkBox_rabbitmq.setEnabled(False)
+        self.status_checkBox_rabbitmq.setObjectName("status_checkBox_rabbitmq")
+        self.verticalLayout.addWidget(self.status_checkBox_rabbitmq)
+        self.status_checkBox_hostapd = QtGui.QCheckBox(self.tabStatus)
+        self.status_checkBox_hostapd.setEnabled(False)
+        self.status_checkBox_hostapd.setObjectName("status_checkBox_hostapd")
+        self.verticalLayout.addWidget(self.status_checkBox_hostapd)
+        self.status_checkBox_udhcpd = QtGui.QCheckBox(self.tabStatus)
+        self.status_checkBox_udhcpd.setEnabled(False)
+        self.status_checkBox_udhcpd.setObjectName("status_checkBox_udhcpd")
+        self.verticalLayout.addWidget(self.status_checkBox_udhcpd)
+        self.status_checkBox_eyefiserver2 = QtGui.QCheckBox(self.tabStatus)
+        self.status_checkBox_eyefiserver2.setEnabled(False)
+        self.status_checkBox_eyefiserver2.setObjectName("status_checkBox_eyefiserver2")
+        self.verticalLayout.addWidget(self.status_checkBox_eyefiserver2)
+        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem)
+        self.tabWidget.addTab(self.tabStatus, "")
         self.listWidgetThumbs = QtGui.QListWidget(self.splitter_2)
         self.listWidgetThumbs.setMaximumSize(QtCore.QSize(16777215, 100))
         self.listWidgetThumbs.setFlow(QtGui.QListView.LeftToRight)
@@ -99,6 +122,11 @@ class Ui_MainWindow(object):
         self.tableWidgetExif.item(4, 0).setText(QtGui.QApplication.translate("MainWindow", "abc", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidgetExif.setSortingEnabled(__sortingEnabled)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabExif), QtGui.QApplication.translate("MainWindow", "Exif", None, QtGui.QApplication.UnicodeUTF8))
+        self.status_checkBox_rabbitmq.setText(QtGui.QApplication.translate("MainWindow", "RabbitMQ (?)", None, QtGui.QApplication.UnicodeUTF8))
+        self.status_checkBox_hostapd.setText(QtGui.QApplication.translate("MainWindow", "HostAPd (?)", None, QtGui.QApplication.UnicodeUTF8))
+        self.status_checkBox_udhcpd.setText(QtGui.QApplication.translate("MainWindow", "uDHCPd (?)", None, QtGui.QApplication.UnicodeUTF8))
+        self.status_checkBox_eyefiserver2.setText(QtGui.QApplication.translate("MainWindow", "EyeFiServer2 (?)", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabStatus), QtGui.QApplication.translate("MainWindow", "Status", None, QtGui.QApplication.UnicodeUTF8))
         self.menuFile.setTitle(QtGui.QApplication.translate("MainWindow", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.action_Quit.setText(QtGui.QApplication.translate("MainWindow", "&Quit", None, QtGui.QApplication.UnicodeUTF8))
 
