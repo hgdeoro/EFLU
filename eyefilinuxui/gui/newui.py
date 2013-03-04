@@ -4,13 +4,13 @@ Created on Mar 2, 2013
 @author: Horacio G. de Oro
 '''
 
+import json
 import logging
 import sys
 
 import PySide
 
 from PySide import QtCore, QtGui
-from eyefilinuxui.gui.rabbitmq_thread import RabbitMQEventReaderThread
 
 # http://stackoverflow.com/questions/13302908/better-way-of-going-from-pil-to-pyside-qimage
 sys.modules['PyQt4'] = PySide # HACK for ImageQt
@@ -18,8 +18,11 @@ sys.modules['PyQt4'] = PySide # HACK for ImageQt
 import Image
 import ImageQt
 
-from eyefilinuxui.util import get_exif_tags, get_tags_to_show, how_much_rotate
+from eyefilinuxui.util import get_exif_tags, get_tags_to_show, how_much_rotate, \
+    SERVICE_STATUS_UP, SERVICE_STATUS_DOWN, SERVICE_NAME_RABBITMQ, \
+    SERVICE_NAME_EYEFISERVER2
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
+from eyefilinuxui.gui.rabbitmq_thread import RabbitMQEventReaderThread
 
 
 logger = logging.getLogger(__name__)
@@ -67,11 +70,33 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         """Override `resizeEvent()`"""
         self._resize_current_image()
 
+    def service_status_changed(self, json_msg):
+        logging.info("service_status_changed()")
+        msg = json.loads(json_msg)
+        if msg['origin'] == SERVICE_NAME_RABBITMQ:
+            qt_component = self.status_checkBox_rabbitmq
+        elif msg['origin'] == SERVICE_NAME_EYEFISERVER2:
+            qt_component = self.status_checkBox_eyefiserver2
+        else:
+            logging.warn("Unknown origin of event: %s", msg['origin'])
+            return
+
+        if msg['extra'].get('new_status', None) == SERVICE_STATUS_UP:
+            qt_component.setChecked(True)
+        elif msg['extra'].get('new_status', None) == SERVICE_STATUS_DOWN:
+            qt_component.setChecked(False)
+        else:
+            logging.warn("Unknown 'new_status': %s", msg['extra'].get('new_status', ''))
+
     def _connect_signals(self):
         """Connect the signals"""
         self.connect(self.rabbitmq_reader_thread,
             QtCore.SIGNAL("display_image(QString)"),
             self.display_image)
+
+        self.connect(self.rabbitmq_reader_thread,
+            QtCore.SIGNAL("service_status_changed(QString)"),
+            self.service_status_changed)
 
         self.connect(self.splitter,
             QtCore.SIGNAL("splitterMoved(int, int)"),

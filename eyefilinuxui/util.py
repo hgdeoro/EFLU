@@ -18,13 +18,18 @@ from pika.exceptions import AMQPConnectionError
 logger = logging.getLogger(__name__)
 
 
+EVENT_QUEUE_NAME = 'eflu.events'
+
 MSG_START = 'start'
 MSG_GET_PID = 'get_pid'
 MSG_QUIT = 'quit'
 
-EVENT_QUEUE_NAME = 'eflu.events'
 
+#===============================================================================
+# IPC messages
+#===============================================================================
 
+# FIXME: rename '_send_msg()' to '_send_ipc_msg()'
 def _send_msg(state, msg):
     """Sends a message to the child process"""
     # FIXME: shouldn't poll() to check if there are old messages awaiting to be read?
@@ -38,6 +43,7 @@ def _send_msg(state, msg):
     return msg_uuid
 
 
+# FIXME: rename '_recv_msg()' to '_recv_ipc_msg()'
 def _recv_msg(state, msg_uuid=None):
     """Receive a message"""
     assert state['running']
@@ -51,7 +57,12 @@ def _recv_msg(state, msg_uuid=None):
     return msg
 
 
+#===============================================================================
+# RabbitMQ messages
+#===============================================================================
+
 def _send_amqp_msg(msg, queue_name):
+    assert isinstance(msg, dict)
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
     channel.exchange_declare(exchange=queue_name, type='fanout')
@@ -59,14 +70,44 @@ def _send_amqp_msg(msg, queue_name):
     connection.close()
 
 
-def send_event(origin, event_type, extra=None):
-    msg = {
-        'origin': origin,
-        'type': event_type,
-        'extra': extra,
+def create_event(origin, event_type, extra={}):
+    assert isinstance(extra, dict)
+    return {
+        'origin': origin, # ORIGIN of the event
+        'type': event_type, # TYPE of event
+        'extra': extra.copy(), # dict with EXTRA information
     }
-    _send_amqp_msg(msg, EVENT_QUEUE_NAME)
 
+
+def send_event(origin, event_type, extra={}):
+    """Low-level method to send an event"""
+    return _send_amqp_msg(create_event(origin, event_type, extra), EVENT_QUEUE_NAME)
+
+
+SERVICE_STATUS_UP = 'UP'
+SERVICE_STATUS_DOWN = 'DOWN'
+
+SERVICE_NAME_RABBITMQ = 'service_rabbitmq'
+SERVICE_NAME_EYEFISERVER2 = 'service_eyefiserver2'
+
+
+def event_is_service_status(msg):
+    """Returns True if 'msg' is about the status of a service"""
+    assert isinstance(msg, dict)
+    return msg['type'] == 'service_status'
+
+
+def create_service_status_event(service_name, new_status):
+    """
+    Creates a 'service status' event, to signal a change in the status
+    of the service.
+    """
+    return create_event(service_name, 'service_status', {'new_status': new_status})
+
+
+#===============================================================================
+# MultiProcessing targets
+#===============================================================================
 
 def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
     _logger.info("Waiting for message...")
@@ -124,6 +165,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
             _logger.info("Popen returded process %s", process[0])
             return
 
+        # FIXME: remove this, implement or comment this
         if msg['action'] == "CHECK_CHILD":
             if process:
                 # ret_code = process.wait()
@@ -149,7 +191,9 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
     channel.basic_consume(callback, queue=_queue_name, no_ack=True)
     conn.send("ACK")
     try:
+        logging.info("Starting channel.start_consuming()...")
         channel.start_consuming()
+        logging.info("channel.start_consuming() finished...")
     except AMQPConnectionError:
         if closing_connection[0]:
             _logger.info("Ignoring AMQPConnectionError")
@@ -198,6 +242,10 @@ def generic_mp_get_pid(_logger, queue_name, state):
     msg = _recv_msg(state, msg_uuid=msg_uuid)
     return msg['pid']
 
+
+#===============================================================================
+# Exif
+#===============================================================================
 
 # get_tags_to_show() returns the tags in the order defined here
 EXIF_TAGS = OrderedDict((
