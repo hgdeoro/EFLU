@@ -226,3 +226,38 @@ def get_exif_tags(image_filename):
     except:
         logger.exception("Couldn't load exif tags... will return empty dict")
         return {}
+
+
+def how_much_rotate(tags):
+    """
+    Returns how many degrees the image should be rotated.
+    Returns `None` if no information is in `tags` or an error ocurs.
+    """
+    #    In [21]: y = x['Image Orientation']
+    #    In [22]: EXIF.EXIF_TAGS[y.tag]
+    #    Out[22]:
+    #    ('Orientation',
+    #     {1: 'Horizontal (normal)',
+    #      2: 'Mirrored horizontal',
+    #      3: 'Rotated 180',
+    #      4: 'Mirrored vertical',
+    #      5: 'Mirrored horizontal then rotated 90 CCW',
+    #      6: 'Rotated 90 CW',
+    #      7: 'Mirrored horizontal then rotated 90 CW',
+    #      8: 'Rotated 90 CCW'})
+
+    if not 'Image Orientation' in tags:
+        return None
+
+    image_orientation = tags['Image Orientation'].values[0]
+    if image_orientation == 1:
+        return 0
+    elif image_orientation == 3:
+        return 180
+    elif image_orientation == 6:
+        return 90
+    elif image_orientation == 8:
+        return -90
+    else:
+        logger.warn("Unknown 'Image Orientation' value: %s", image_orientation)
+        return None

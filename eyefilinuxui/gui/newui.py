@@ -18,7 +18,7 @@ sys.modules['PyQt4'] = PySide # HACK for ImageQt
 import Image
 import ImageQt
 
-from eyefilinuxui.util import get_exif_tags, get_tags_to_show
+from eyefilinuxui.util import get_exif_tags, get_tags_to_show, how_much_rotate
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
 
 
@@ -112,35 +112,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
                 self.tableWidgetExif.setItem(row_num, 0, valueItem)
             self.tableWidgetExif.setVerticalHeaderLabels(exif_keys)
             self.tableWidgetExif.resizeColumnsToContents()
-
-            #    In [21]: y = x['Image Orientation']
-            #    In [22]: EXIF.EXIF_TAGS[y.tag]
-            #    Out[22]:
-            #    ('Orientation',
-            #     {1: 'Horizontal (normal)',
-            #      2: 'Mirrored horizontal',
-            #      3: 'Rotated 180',
-            #      4: 'Mirrored vertical',
-            #      5: 'Mirrored horizontal then rotated 90 CCW',
-            #      6: 'Rotated 90 CW',
-            #      7: 'Mirrored horizontal then rotated 90 CW',
-            #      8: 'Rotated 90 CCW'})
-
-            try:
-                if 'Image Orientation' in self.current_image_exif:
-                    image_orientation = self.current_image_exif['Image Orientation'].values[0]
-                    if image_orientation == 1:
-                        pass
-                    elif image_orientation == 3:
-                        self.current_image_rotate = 180
-                    elif image_orientation == 6:
-                        self.current_image_rotate = 90
-                    elif image_orientation == 8:
-                        self.current_image_rotate = -90
-                    else:
-                        logger.warn("Unknown 'Image Orientation' value: %s", image_orientation)
-            except:
-                logger.exception("Couldn't get orientation from EXIF")
+            self.current_image_rotate = how_much_rotate(self.current_image_exif)
 
     def add_current_image_to_thumb_list(self):
         thumb_item = QtGui.QListWidgetItem()
