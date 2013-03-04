@@ -4,16 +4,13 @@ Created on Mar 2, 2013
 @author: Horacio G. de Oro
 '''
 
-import json
 import logging
-import pika
 import sys
 
 import PySide
 
 from PySide import QtCore, QtGui
-from pika.exceptions import AMQPConnectionError
-
+from eyefilinuxui.gui.rabbitmq_thread import RabbitMQEventReaderThread
 
 # http://stackoverflow.com/questions/13302908/better-way-of-going-from-pil-to-pyside-qimage
 sys.modules['PyQt4'] = PySide # HACK for ImageQt
@@ -21,50 +18,11 @@ sys.modules['PyQt4'] = PySide # HACK for ImageQt
 import Image
 import ImageQt
 
-from eyefilinuxui.util import EVENT_QUEUE_NAME, get_exif_tags
+from eyefilinuxui.util import get_exif_tags
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
 
 
 logger = logging.getLogger(__name__)
-
-
-class RabbitMQEventReaderThread(QtCore.QThread):
-
-    def __init__(self, parent=None):
-        QtCore.QThread.__init__(self, parent)
-
-    def callback(self, ch, method, properties, msg):
-        logger.info("MSG recibido: %s", msg)
-        msg = json.loads(msg)
-        if msg['origin'] == 'eyefiserver' and msg['type'] == 'upload' and msg['extra']:
-            if 'filename' in msg['extra']:
-                self.emit(
-                    QtCore.SIGNAL("display_image(QString)"),
-                    msg['extra']['filename'],
-                )
-
-        #    send_event('eyefiserver', 'upload', {
-        #        'filename': imagePath,
-        #    })
-        #    msg = {
-        #        'origin': origin,
-        #        'type': event_type,
-        #        'extra': extra,
-        #    }
-
-    def run(self):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.exchange_declare(exchange=EVENT_QUEUE_NAME, type='fanout')
-        result = channel.queue_declare(exclusive=True)
-        _queue_name = result.method.queue
-        channel.queue_bind(exchange=EVENT_QUEUE_NAME, queue=_queue_name)
-
-        channel.basic_consume(self.callback, queue=_queue_name, no_ack=True)
-        try:
-            channel.start_consuming()
-        except AMQPConnectionError:
-            raise
 
 
 #
@@ -78,56 +36,66 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
-        self.scene = QtGui.QGraphicsScene()
-        self.graphicsView.setScene(self.scene)
+        # Hold references to current image
+        self.current_image_filename = None
         self.image = None
         self.imageQt = None
         self.pixMap = None
+
+        # How much (if any) to rotate the current image
         self.image_rotate = 0
 
+        # Hold references to thumbs
+        self.thumbs = []
+
+        self.scene = QtGui.QGraphicsScene()
+        self.graphicsView.setScene(self.scene)
         self.resize(800, 600)
         self.splitter.setSizes([600, 180])
         self.listWidgetThumbs.setIconSize(QtCore.QSize(100, 100))
-        self.thumbs = []
 
         # Create thread and connect
         self.rabbitmq_reader_thread = RabbitMQEventReaderThread()
+        self.rabbitmq_reader_thread.start()
 
+        self._connect_signals()
+
+    def resizeEvent(self, event):
+        """Override `resizeEvent()`"""
+        self._resize_current_image()
+
+    def _connect_signals(self):
+        """Connect the signals"""
         self.connect(self.rabbitmq_reader_thread,
             QtCore.SIGNAL("display_image(QString)"),
             self.display_image)
 
         self.connect(self.splitter,
             QtCore.SIGNAL("splitterMoved(int, int)"),
-            self._do_resize)
+            self._resize_current_image)
 
-        self.listWidgetThumbs.currentItemChanged.connect(self._show_old_image)
+        self.listWidgetThumbs.currentItemChanged.connect(
+            self._show_image_from_thumbs)
 
-        self.rabbitmq_reader_thread.start()
-
-    def _show_old_image(self, current, previous):
+    def _show_image_from_thumbs(self, current, previous):
+        """Shows and image from the thumbnails"""
         img_list = self.thumbs[self.listWidgetThumbs.currentRow()]
         self.display_image(img_list[0], add_to_thumb_list=False)
 
-    def _do_resize(self):
+    def _resize_current_image(self):
         if self.image:
             w, h = self.image.size
             self.graphicsView.fitInView(QtCore.QRectF(0, 0, w, h), QtCore.Qt.KeepAspectRatio)
             self.scene.update()
 
-    def resizeEvent(self, event):
-        self._do_resize()
-
-    def display_image(self, image_filename, add_to_thumb_list=True):
-        self.image = Image.open(image_filename)
-        self.scene.clear()
+    def update_exif(self, image_filename):
+        """Updates the EXIF information, updates `image_rotate`"""
         self.tableWidgetExif.clear()
         self.tableWidgetExif.setColumnCount(1)
         self.tableWidgetExif.setHorizontalHeaderLabels(["Value"])
         self.image_rotate = 0
-        self.graphicsView.resetTransform()
-        self.graphicsView.resetMatrix()
 
+        # FIXME: clean with one call (don't know how)
         while self.tableWidgetExif.rowCount():
             self.tableWidgetExif.removeRow(0)
 
@@ -145,7 +113,6 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             self.tableWidgetExif.resizeColumnsToContents()
 
             #    In [21]: y = x['Image Orientation']
-            #
             #    In [22]: EXIF.EXIF_TAGS[y.tag]
             #    Out[22]:
             #    ('Orientation',
@@ -157,6 +124,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             #      6: 'Rotated 90 CW',
             #      7: 'Mirrored horizontal then rotated 90 CW',
             #      8: 'Rotated 90 CCW'})
+
             try:
                 if 'Image Orientation' in other_dict:
                     image_orientation = other_dict['Image Orientation'].values[0]
@@ -169,31 +137,48 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             except:
                 logger.exception("Couldn't get orientation from EXIF")
 
-        self.statusBar.showMessage("Image: {0}".format(image_filename))
+    def add_current_image_to_thumb_list(self):
+        thumb_item = QtGui.QListWidgetItem()
+        icon = QtGui.QIcon(self.pixMap)
+        thumb_item.setIcon(icon)
+        self.listWidgetThumbs.addItem(thumb_item)
+        self.thumbs.append(
+            (self.current_image_filename, self.image, self.imageQt, self.pixMap, icon)
+        )
+
+    def display_image(self, image_filename, add_to_thumb_list=True):
+        self.current_image_filename = image_filename
+        self.image = Image.open(self.current_image_filename)
+        self.scene.clear()
+        self.graphicsView.resetTransform()
+        self.graphicsView.resetMatrix()
+
+        self.statusBar.showMessage("Image: {0}".format(self.current_image_filename))
         self.imageQt = ImageQt.ImageQt(self.image)
         self.pixMap = QtGui.QPixmap.fromImage(self.imageQt, QtCore.Qt.ImageConversionFlag.AutoColor)
         self.scene.addPixmap(self.pixMap)
-        self.graphicsView.rotate(self.image_rotate)
+
+        self.update_exif(self.current_image_filename)
+
+        if self.image_rotate != 0:
+            self.graphicsView.rotate(self.image_rotate) # update_exif() updates `image_rotate`
 
         if add_to_thumb_list:
-            thumb_item = QtGui.QListWidgetItem()
-            icon = QtGui.QIcon(self.pixMap)
-            thumb_item.setIcon(icon)
-            self.listWidgetThumbs.addItem(thumb_item)
-            self.thumbs.append(
-                (image_filename, self.image, self.imageQt, self.pixMap, icon)
-            )
+            self.add_current_image_to_thumb_list()
 
-        self._do_resize()
+        self._resize_current_image()
 
 
 def start_gui():
+    """
+    Creates the QApplication and window.
+    Returns (app, window,), you must call `app.exec_()`.
+    """
     app = QtGui.QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    # window.display_image(sys.argv[1])
-    # app.exec_()
     return app, window
+
 
 if __name__ == '__main__':
     app, window = start_gui()
