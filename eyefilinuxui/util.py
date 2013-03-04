@@ -3,6 +3,7 @@ Created on Mar 2, 2013
 
 @author: Horacio G. de Oro
 '''
+
 import json
 import logging
 import pika
@@ -11,6 +12,7 @@ import subprocess
 import uuid
 
 from multiprocessing import Process, Pipe
+from collections import OrderedDict
 from pika.exceptions import AMQPConnectionError
 
 logger = logging.getLogger(__name__)
@@ -197,34 +199,30 @@ def generic_mp_get_pid(_logger, queue_name, state):
     return msg['pid']
 
 
-EXIF_TAGS = (
-    'EXIF FNumber',
-    'EXIF ExposureTime',
-    'EXIF ISOSpeedRatings',
-    'EXIF DateTimeDigitized',
-    'EXIF Flash',
-)
+# get_tags_to_show() returns the tags in the order defined here
+EXIF_TAGS = OrderedDict((
+    ('EXIF ISOSpeedRatings', 'ISO'),
+    ('EXIF FNumber', 'Aperture'),
+    ('EXIF ExposureTime', 'Exposure'),
+    ('EXIF Flash', 'Flash'),
+    ('EXIF DateTimeDigitized', 'Date'),
+))
+
+
+def get_tags_to_show(tags):
+    """Returns a dict with exif information to show"""
+    to_show = OrderedDict()
+    for tag_name in EXIF_TAGS.keys():
+        to_show[EXIF_TAGS[tag_name]] = tags[tag_name]
+    return to_show
 
 
 def get_exif_tags(image_filename):
-    """Returns a dict with exif information to show, and a second dict with the other tags"""
+    """Returns a dict with exif information"""
     try:
         import EXIF
         with open(image_filename, 'rb') as image_file:
-            tags = EXIF.process_file(image_file)
-        to_show = {}
-        other = {}
-        for k, v in tags.iteritems():
-            if k in EXIF_TAGS:
-                if k.startswith('EXIF '):
-                    tag_without_exif_prefix = k[5:]
-                else:
-                    tag_without_exif_prefix = k
-                to_show[tag_without_exif_prefix] = v
-            else:
-                other[k] = v
-        logger.debug(pprint.pformat(to_show))
-        return to_show, other
+            return dict(EXIF.process_file(image_file))
     except:
         logger.exception("Couldn't load exif tags... will return empty dict")
-        return {}, {}
+        return {}

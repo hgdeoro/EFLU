@@ -18,7 +18,7 @@ sys.modules['PyQt4'] = PySide # HACK for ImageQt
 import Image
 import ImageQt
 
-from eyefilinuxui.util import get_exif_tags
+from eyefilinuxui.util import get_exif_tags, get_tags_to_show
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
 
 
@@ -42,7 +42,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.current_image_qt = None
         self.current_pixmap = None
         self.current_image_rotate = 0 # How much (if any) to rotate the current image
-        # self.current_image_exif
+        self.current_image_exif = {}
 
         # Hold references to thumbs
         self.thumbs = []
@@ -98,9 +98,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         while self.tableWidgetExif.rowCount():
             self.tableWidgetExif.removeRow(0)
 
-        exif_dict_to_show, other_dict = get_exif_tags(image_filename)
-        exif_keys = sorted(exif_dict_to_show.keys())
-        if exif_dict_to_show:
+        self.current_image_exif = get_exif_tags(image_filename)
+
+        if self.current_image_exif:
+            exif_dict_to_show = get_tags_to_show(self.current_image_exif)
+            exif_keys = sorted(exif_dict_to_show.keys())
             for row_num in range(0, len(exif_dict_to_show)):
                 valueItem = QtGui.QTableWidgetItem()
                 valueItem.setTextAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
@@ -125,8 +127,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             #      8: 'Rotated 90 CCW'})
 
             try:
-                if 'Image Orientation' in other_dict:
-                    image_orientation = other_dict['Image Orientation'].values[0]
+                if 'Image Orientation' in self.current_image_exif:
+                    image_orientation = self.current_image_exif['Image Orientation'].values[0]
                     if image_orientation == 1:
                         pass
                     elif image_orientation == 3:
