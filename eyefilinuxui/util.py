@@ -61,6 +61,12 @@ def _recv_msg(state, msg_uuid=None):
 # RabbitMQ messages
 #===============================================================================
 
+def _check_amqp_connection():
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    logger.debug("Connection to RabbitMQ OK")
+    connection.disconnect()
+
+
 def _send_amqp_msg(msg, queue_name):
     assert isinstance(msg, dict)
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -111,6 +117,7 @@ def create_service_status_event(service_name, new_status):
 #===============================================================================
 
 def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
+    """This function run in the child process"""
     _logger.info("Waiting for message...")
 
     process = []
@@ -120,8 +127,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
     channel = connection.channel()
     channel.exchange_declare(exchange=amqp_queue_name, type='fanout')
     result = channel.queue_declare(exclusive=True)
-    _queue_name = result.method.queue
-    channel.queue_bind(exchange=amqp_queue_name, queue=_queue_name)
+    channel.queue_bind(exchange=amqp_queue_name, queue=result.method.queue)
 
     def callback(ch, method, properties, msg):
         msg = json.loads(msg)
@@ -158,7 +164,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
         if msg['action'] == MSG_START:
             if process:
                 # FIXME: raise error? stop old process? warn and continue?
-                _logger.warn("A process exists: %s. It will be overriden", process[0])
+                _logger.warn("A process exists: %s. It will be ignored... this can cause problems!", process[0])
                 while process:
                     process.pop()
             _logger.info("Will Popen with args: %s", pprint.pformat(start_args))
@@ -189,7 +195,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
 
         _logger.error("UNKNOWN MESSAGE: %s", pprint.pformat(msg))
 
-    channel.basic_consume(callback, queue=_queue_name, no_ack=True)
+    channel.basic_consume(callback, queue=result.method.queue, no_ack=True)
     conn.send("ACK")
     try:
         logging.info("Starting channel.start_consuming()...")

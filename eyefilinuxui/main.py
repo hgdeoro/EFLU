@@ -6,6 +6,8 @@ Created on Mar 2, 2013
 
 import argparse
 import logging
+import socket
+import sys
 import time
 
 from eyefilinuxui.hostapd import start_hostapd, stop_hostapd, hostapd_gen_config
@@ -15,15 +17,13 @@ from eyefilinuxui.networking_setup import nm_check_disconnected, \
 from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config, \
     start_eyefiserver2, stop_eyefiserver2
 from eyefilinuxui.gui.newui import start_gui
+from eyefilinuxui.util import _check_amqp_connection
 
 logger = logging.getLogger(__name__)
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
-
     parser = argparse.ArgumentParser(description='EyFi Linux Ui')
-
     parser.add_argument('--interface', help='wifi interface', default='wlan1', required=True)
     # parser.add_argument('--ip', help='ip to use on the wifi interface', default='10.105.106.2')
     parser.add_argument('--wifi_ssid', help='ssid to use for the wifi network', required=True)
@@ -32,15 +32,45 @@ def main():
     parser.add_argument('--eyefi_mac', help='MAC address of EyeFi card', required=True)
     parser.add_argument('--eyefi_upload_key', help='EyeFi secret (from Settings.xml)', required=True)
     parser.add_argument('--upload_dir', help='Directory to upload images', required=True)
+    parser.add_argument('--debug', help='Set logging to debug level',
+        action='store_true', default=False)
 
     args = parser.parse_args()
 
     # FIXME: validate arguments (ej: format of IP, MAC, upload dir perms, etc)
 
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
     if not nm_interface_exists(args.interface):
         parser.error("The interface {0} does not exists".format(args.interface))
 
     ip = "10.105.106.2"
+
+    mac_whitelist = [m.strip() for m in args.mac_whitelist.strip().split(',') if m.strip()]
+    if args.eyefi_mac not in mac_whitelist:
+        mac_whitelist.append(args.eyefi_mac)
+    for mac in mac_whitelist:
+        if len(mac.split(':')) != 6 or list(set([len(x) for x in mac.split(':')])) != [2]:
+            parser.error("Invalid MAC: '{0}' - Use `xx:xx:xx:xx:xx:xx` format".format(mac))
+
+    try:
+        _check_amqp_connection()
+    except socket.error:
+        # TODO: maybe we could start the gui even if rabbitmq isn't working
+        print "ERROR: couldn't connect to RabbitMQ"
+        sys.exit(1)
+
+    #===========================================================================
+    # Start the UI
+    #===========================================================================
+
+    qt_app, _ = start_gui()
+    qt_app.processEvents()
+
+    # FIXME: here we should call app.exec_() and do the initialization in a thread
 
     #===========================================================================
     # Configure the interface
@@ -50,6 +80,7 @@ def main():
     ok = nm_check_disconnected(args.interface)
     if not ok:
         nm_try_disconnect(args.interface)
+        qt_app.processEvents()
 
     # FIXME: setup firewall
     #    sudo iptables -I INPUT -i $IFACE -p icmp -j ACCEPT
@@ -59,26 +90,23 @@ def main():
     #    sudo iptables -I FORWARD -o $IFACE -j REJECT
 
     ifconfig(args.interface, ip)
+    qt_app.processEvents()
 
     iptables(args.interface, ip)
+    qt_app.processEvents()
 
     #===========================================================================
     # HostAP
     #===========================================================================
-    macs = [m.strip() for m in args.mac_whitelist.strip().split(',') if m.strip()]
-    if args.eyefi_mac not in macs:
-        macs.append(args.eyefi_mac)
-    for mac in macs:
-        if len(mac.split(':')) != 6 or list(set([len(x) for x in mac.split(':')])) != [2]:
-            parser.error("Invalid MAC: '{0}' - Use `xx:xx:xx:xx:xx:xx` format".format(mac))
     hostapd_config_filename = hostapd_gen_config(
         args.interface,
         args.wifi_ssid,
-        macs,
+        mac_whitelist,
         args.wifi_passphrase
     )
 
     start_hostapd(hostapd_config_filename)
+    qt_app.processEvents()
 
     #===========================================================================
     # uDHCPd
@@ -96,6 +124,7 @@ def main():
         ip,
     )
     start_udhcpd(udhcpd_config_filename)
+    qt_app.processEvents()
 
     #===========================================================================
     # EyeFiServer2
@@ -105,9 +134,9 @@ def main():
         args.eyefi_upload_key, args.upload_dir)
 
     start_eyefiserver2(eyefiserver2_config)
+    qt_app.processEvents()
 
     try:
-        qt_app, _ = start_gui()
         qt_app.exec_()
         logging.warn("")
         logging.warn("")
