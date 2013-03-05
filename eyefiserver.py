@@ -46,7 +46,7 @@ import ConfigParser
 import math
 import logging
 
-from eyefilinuxui.util import send_event
+from eyefilinuxui.util import send_event, create_upload_event
 
 eyeFiLogger = logging.getLogger(__name__)
 
@@ -379,9 +379,7 @@ class EyeFiRequestHandler(BaseHTTPRequestHandler):
             f = imageTarfile.extract(member, uploadDir)
             imagePath = os.path.join(uploadDir, member.name)
 
-            send_event('eyefiserver', 'upload', {
-                'filename': imagePath,
-            })
+            send_event(create_upload_event('cli', imagePath))
 
             eyeFiLogger.debug("imagePath " + imagePath)
             os.utime(imagePath, (member.mtime + timeoffset, member.mtime + timeoffset))

@@ -95,9 +95,25 @@ def create_event(origin, event_type, extra={}):
     }
 
 
-def send_event(origin, event_type, extra={}):
+def send_event(origin_or_event, event_type=None, extra={}):
     """Low-level method to create and send an event"""
-    return _send_amqp_msg(create_event(origin, event_type, extra), EVENT_QUEUE_NAME)
+    if is_event(origin_or_event):
+        return _send_amqp_msg(origin_or_event, EVENT_QUEUE_NAME)
+    else:
+        assert isinstance(origin_or_event, basestring)
+        assert event_type is not None
+        return _send_amqp_msg(create_event(origin_or_event, event_type, extra), EVENT_QUEUE_NAME)
+
+
+def event_is_upload(msg):
+    assert isinstance(msg, dict)
+    return msg['type'] == 'upload'
+
+
+def create_upload_event(origin, filename):
+    return create_event(origin, 'upload', {
+        'filename': filename,
+    })
 
 
 SERVICE_STATUS_UP = 'UP'
@@ -169,7 +185,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
 
     def callback(ch, method, properties, msg):
         msg = json.loads(msg)
-        _logger.info("Message received: %s", pprint.pformat(msg))
+        _logger.debug("Message received: %s", pprint.pformat(msg))
 
         if is_event(msg):
             # new-style 'event' based actions

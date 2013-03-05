@@ -13,7 +13,8 @@ from pika.exceptions import AMQPConnectionError
 
 from eyefilinuxui.util import EVENT_QUEUE_NAME, \
     SERVICE_STATUS_UP, SERVICE_NAME_RABBITMQ, SERVICE_STATUS_DOWN, \
-    event_is_service_status, create_service_status_event
+    event_is_service_status, create_service_status_event, is_event, \
+    event_is_upload
 
 
 logger = logging.getLogger(__name__)
@@ -29,27 +30,23 @@ class RabbitMQToQtSignalThread(QtCore.QThread):
         logger.info("MSG recibido: %s", msg)
         json_msg = msg
         msg = json.loads(msg)
-        if msg['origin'] == 'eyefiserver' and msg['type'] == 'upload' and msg['extra']:
-            if 'filename' in msg['extra']:
-                self.emit(
-                    QtCore.SIGNAL("display_image(QString)"),
-                    msg['extra']['filename'],
-                )
+        assert is_event(msg)
+
+        if event_is_upload(msg):
+            self.emit(
+                QtCore.SIGNAL("display_image(QString)"),
+                msg['extra']['filename'],
+            )
+            return
 
         if event_is_service_status(msg):
             self.emit(
                 QtCore.SIGNAL("service_status_changed(QString)"),
                 json_msg,
             )
+            return
 
-        #    send_event('eyefiserver', 'upload', {
-        #        'filename': imagePath,
-        #    })
-        #    msg = {
-        #        'origin': origin,
-        #        'type': event_type,
-        #        'extra': extra,
-        #    }
+        logger.info("Ignoring event %s", json_msg)
 
     def run(self):
         try:

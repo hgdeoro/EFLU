@@ -10,7 +10,7 @@ import time
 import unittest
 
 from eyefilinuxui.gui.newui import start_gui
-from eyefilinuxui.util import send_event
+from eyefilinuxui.util import send_event, create_upload_event
 
 
 class TestMain(unittest.TestCase):
@@ -42,7 +42,7 @@ class TestMain(unittest.TestCase):
             filename = os.path.join(base_dir, 'test_image_{:04d}.jpg'.format(seq))
             if os.path.exists(filename):
                 logging.info("Test image exists: '%s'. Will send event...", filename)
-                send_event('eyefiserver', 'upload', {'filename': filename, })
+                send_event(create_upload_event('test', filename))
             else:
                 break
         logging.info("Done!")
