@@ -41,6 +41,7 @@ def main():
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger('pika').setLevel(logging.INFO)
     else:
         logging.basicConfig(level=logging.INFO)
 
