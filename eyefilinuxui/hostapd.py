@@ -8,11 +8,9 @@ import logging
 import os
 
 from eyefilinuxui.util import generic_start_multiprocess, \
-    generic_mp_get_pid, generic_mp_stop
+    generic_mp_get_pid, generic_mp_stop, HOSTAPD_QUEUE_NAME
 
 logger = logging.getLogger(__name__)
-
-QUEUE_NAME = 'eflu.hostapd'
 
 CONFIG_FILE = '/tmp/.eyefi-hostapd.conf'
 ACCEPT_MAC_FILE = '/tmp/.eyefi-hostapd.accept'
@@ -57,15 +55,15 @@ def _generate_test_config():
 def start_hostapd(config_filename):
     start_args = ["sudo", "hostapd", config_filename]
     action_map = {}
-    return generic_start_multiprocess(start_args, action_map, logger, QUEUE_NAME, STATE)
+    return generic_start_multiprocess(start_args, action_map, logger, HOSTAPD_QUEUE_NAME, STATE)
 
 
 # FIXME: lock
 def stop_hostapd():
-    return generic_mp_stop(logger, QUEUE_NAME, STATE)
+    return generic_mp_stop(logger, HOSTAPD_QUEUE_NAME, STATE)
 
 
 # FIXME: lock
 def get_hostapd_pid():
     """Returns the PID, or None if not running"""
-    return generic_mp_get_pid(logger, QUEUE_NAME, STATE)
+    return generic_mp_get_pid(logger, HOSTAPD_QUEUE_NAME, STATE)

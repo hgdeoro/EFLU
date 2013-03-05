@@ -8,11 +8,9 @@ import logging
 import os
 
 from eyefilinuxui.util import generic_start_multiprocess, generic_mp_get_pid, \
-    generic_mp_stop
+    generic_mp_stop, UDHCPD_QUEUE_NAME
 
 logger = logging.getLogger(__name__)
-
-QUEUE_NAME = 'eflu.udhcpd'
 
 CONFIG_FILE = '/tmp/.eyefi-udhcpd.conf'
 PID_FILE = '/tmp/.eyefi-udhcpd.pid'
@@ -59,14 +57,14 @@ def _generate_test_config():
 def start_udhcpd(config_filename):
     start_args = ["sudo", "busybox", "udhcpd", "-f", config_filename]
     action_map = {}
-    return generic_start_multiprocess(start_args, action_map, logger, QUEUE_NAME, STATE)
+    return generic_start_multiprocess(start_args, action_map, logger, UDHCPD_QUEUE_NAME, STATE)
 
 
 # FIXME: lock
 def stop_udhcpd():
-    return generic_mp_stop(logger, QUEUE_NAME, STATE)
+    return generic_mp_stop(logger, UDHCPD_QUEUE_NAME, STATE)
 
 
 # FIXME: lock
 def get_udhcpd_pid():
-    return generic_mp_get_pid(logger, QUEUE_NAME, STATE)
+    return generic_mp_get_pid(logger, UDHCPD_QUEUE_NAME, STATE)

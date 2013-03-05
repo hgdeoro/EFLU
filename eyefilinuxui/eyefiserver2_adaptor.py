@@ -13,8 +13,6 @@ from eyefiserver import runEyeFi
 
 logger = logging.getLogger(__name__)
 
-QUEUE_NAME = 'eflu.eyefiserver2'
-
 CONFIG_FILE = '/tmp/.eyefiserver2.conf'
 
 STATE = {

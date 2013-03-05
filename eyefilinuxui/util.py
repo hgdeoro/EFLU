@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 
 
 EVENT_QUEUE_NAME = 'eflu.events'
+UDHCPD_QUEUE_NAME = 'eflu.udhcpd'
+HOSTAPD_QUEUE_NAME = 'eflu.hostapd'
+EYEFISERVER_QUEUE_NAME = 'eflu.eyefiserver2'
 
 MSG_START = 'start'
 MSG_GET_PID = 'get_pid'
