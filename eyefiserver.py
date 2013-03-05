@@ -46,7 +46,8 @@ import ConfigParser
 import math
 import logging
 
-from eyefilinuxui.util import send_event, create_upload_event
+from eyefilinuxui.util import send_event, create_upload_event, \
+    create_service_status_event, SERVICE_NAME_EYEFISERVER2, SERVICE_STATUS_UP
 
 eyeFiLogger = logging.getLogger(__name__)
 
@@ -662,4 +663,7 @@ def runEyeFi(configfile):
     eyeFiServer = EyeFiServer(server_address, EyeFiRequestHandler)
     eyeFiServer.config = config
     eyeFiLogger.info("Eye-Fi server started listening on port " + str(server_address[1]))
+
+    send_event(create_service_status_event(SERVICE_NAME_EYEFISERVER2, SERVICE_STATUS_UP))
+
     eyeFiServer.serve_forever()
