@@ -22,7 +22,7 @@ from eyefilinuxui.util import get_exif_tags, get_tags_to_show, how_much_rotate, 
     SERVICE_STATUS_UP, SERVICE_STATUS_DOWN, SERVICE_NAME_RABBITMQ, \
     SERVICE_NAME_EYEFISERVER2
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
-from eyefilinuxui.gui.rabbitmq_thread import RabbitMQEventReaderThread
+from eyefilinuxui.gui.rabbitmq_to_qtsignal import RabbitMQToQtSignalThread
 
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.listWidgetThumbs.setIconSize(QtCore.QSize(100, 100))
 
         # Create thread and connect
-        self.rabbitmq_reader_thread = RabbitMQEventReaderThread()
+        self.rabbitmq_reader_thread = RabbitMQToQtSignalThread()
         self.rabbitmq_reader_thread.start()
 
         # self.clear_exif()

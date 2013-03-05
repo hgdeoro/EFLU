@@ -19,7 +19,7 @@ from eyefilinuxui.util import EVENT_QUEUE_NAME, \
 logger = logging.getLogger(__name__)
 
 
-class RabbitMQEventReaderThread(QtCore.QThread):
+class RabbitMQToQtSignalThread(QtCore.QThread):
 
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
