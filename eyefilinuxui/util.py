@@ -274,6 +274,20 @@ def generic_mp_stop(_logger, queue_name, state):
     _logger.info("Process exit status: %s", state['process'].exitcode)
 
 
+def generic_mp_check_subprocess(_logger, state):
+    if not state['running']:
+        return # isn't running
+    if state['process'].is_alive():
+        return # is alive
+    _logger.info("Process %s isn't alive, yet marked as 'running'... Will join() for 5 seconds...", state['process'])
+    state['process'].join(5)
+    if state['process'].exitcode is None:
+        _logger.warn("After join(), process %s has 'None' as exitcode", state['process'])
+    else:
+        _logger.info("Process %s finished with exit code %s", state['process'], state['process'].exitcode)
+        state['running'] = False
+
+
 def generic_mp_get_pid_of_ultimate_child(_logger, queue_name, state):
     """Returns the PID, or None if not running"""
     msg_uuid = str(uuid.uuid4())

@@ -8,7 +8,7 @@ import logging
 import os
 
 from eyefilinuxui.util import generic_start_multiprocess, generic_mp_get_pid_of_ultimate_child, \
-    generic_mp_stop, UDHCPD_QUEUE_NAME
+    generic_mp_stop, UDHCPD_QUEUE_NAME, generic_mp_check_subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -68,3 +68,8 @@ def stop_udhcpd():
 # FIXME: lock
 def get_udhcpd_pid():
     return generic_mp_get_pid_of_ultimate_child(logger, UDHCPD_QUEUE_NAME, STATE)
+
+
+# FIXME: lock
+def check_udhcpd_subprocess():
+    generic_mp_check_subprocess(logger, STATE)

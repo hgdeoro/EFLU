@@ -8,7 +8,8 @@ import logging
 import os
 
 from eyefilinuxui.util import generic_start_multiprocess, \
-    generic_mp_get_pid_of_ultimate_child, generic_mp_stop, HOSTAPD_QUEUE_NAME
+    generic_mp_get_pid_of_ultimate_child, generic_mp_stop, HOSTAPD_QUEUE_NAME, \
+    generic_mp_check_subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +68,8 @@ def stop_hostapd():
 def get_hostapd_pid():
     """Returns the PID, or None if not running"""
     return generic_mp_get_pid_of_ultimate_child(logger, HOSTAPD_QUEUE_NAME, STATE)
+
+
+# FIXME: lock
+def check_hostapd_subprocess():
+    generic_mp_check_subprocess(logger, STATE)
