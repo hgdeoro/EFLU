@@ -274,7 +274,7 @@ def generic_mp_stop(_logger, queue_name, state):
     _logger.info("Process exit status: %s", state['process'].exitcode)
 
 
-def generic_mp_get_pid(_logger, queue_name, state):
+def generic_mp_get_pid_of_ultimate_child(_logger, queue_name, state):
     """Returns the PID, or None if not running"""
     msg_uuid = str(uuid.uuid4())
 

@@ -7,7 +7,7 @@ Created on Mar 2, 2013
 import logging
 import os
 
-from eyefilinuxui.util import generic_start_multiprocess, generic_mp_get_pid, \
+from eyefilinuxui.util import generic_start_multiprocess, generic_mp_get_pid_of_ultimate_child, \
     generic_mp_stop, UDHCPD_QUEUE_NAME
 
 logger = logging.getLogger(__name__)
@@ -67,4 +67,4 @@ def stop_udhcpd():
 
 # FIXME: lock
 def get_udhcpd_pid():
-    return generic_mp_get_pid(logger, UDHCPD_QUEUE_NAME, STATE)
+    return generic_mp_get_pid_of_ultimate_child(logger, UDHCPD_QUEUE_NAME, STATE)
