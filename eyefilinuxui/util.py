@@ -129,6 +129,20 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
     result = channel.queue_declare(exclusive=True)
     channel.queue_bind(exchange=amqp_queue_name, queue=result.method.queue)
 
+    def _check_child_pids():
+        _logger.debug("_check_child_pids()")
+        for p in process:
+            returncode = p.poll()
+            if returncode is not None:
+                _logger.info("Process %s finished with exit status %s. Will join()", p, returncode)
+                p.join()
+                _logger.info("join() OK", p, returncode)
+                process.remove(p)
+                # process changed... returning...
+                return
+
+    # connection.add_timeout(2, _check_child_pids) # this call the callback just 1 time
+
     def callback(ch, method, properties, msg):
         msg = json.loads(msg)
         _logger.info("Message received: %s", pprint.pformat(msg))
