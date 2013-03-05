@@ -46,7 +46,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tabExif">
          <attribute name="title">
@@ -86,7 +86,7 @@
              <number>1</number>
             </property>
             <attribute name="verticalHeaderVisible">
-             <bool>true</bool>
+             <bool>false</bool>
             </attribute>
             <row/>
             <row/>
@@ -127,59 +127,74 @@
          <attribute name="title">
           <string>Status</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout">
-          <item>
+         <layout class="QFormLayout" name="formLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="status_label_rabbitmq">
+            <property name="text">
+             <string>UNKNOWN</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
            <widget class="QCheckBox" name="status_checkBox_rabbitmq">
             <property name="enabled">
              <bool>false</bool>
             </property>
             <property name="text">
-             <string>RabbitMQ (?)</string>
+             <string>RabbitMQ</string>
             </property>
            </widget>
           </item>
-          <item>
+          <item row="1" column="1">
            <widget class="QCheckBox" name="status_checkBox_hostapd">
             <property name="enabled">
              <bool>false</bool>
             </property>
             <property name="text">
-             <string>HostAPd (?)</string>
+             <string>HostAPd</string>
             </property>
            </widget>
           </item>
-          <item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="status_label_hostapd">
+            <property name="text">
+             <string>UNKNOWN</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
            <widget class="QCheckBox" name="status_checkBox_udhcpd">
             <property name="enabled">
              <bool>false</bool>
             </property>
             <property name="text">
-             <string>uDHCPd (?)</string>
+             <string>uDHCPd</string>
             </property>
            </widget>
           </item>
-          <item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="status_label_udhcpd">
+            <property name="text">
+             <string>UNKNOWN</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="status_label_eyefiserver2">
+            <property name="text">
+             <string>UNKNOWN</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
            <widget class="QCheckBox" name="status_checkBox_eyefiserver2">
             <property name="enabled">
              <bool>false</bool>
             </property>
             <property name="text">
-             <string>EyeFiServer2 (?)</string>
+             <string>EyeFiServer2</string>
             </property>
            </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
         </widget>

@@ -39,6 +39,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
+        # fix QtCreator issues
+        self.tabWidget.setCurrentIndex(0)
+        self.tableWidgetExif.verticalHeader().setVisible(True)
+        self.tableWidgetExif.verticalHeader().setResizeMode(QtGui.QHeaderView.Fixed)
+
         # Hold references to current image
         self.current_image_filename = None
         self.current_image = None
@@ -56,8 +61,6 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.splitter.setSizes([600, 180])
         self.listWidgetThumbs.setIconSize(QtCore.QSize(100, 100))
 
-        self.tableWidgetExif.verticalHeader().setResizeMode(QtGui.QHeaderView.Fixed)
-
         # Create thread and connect
         self.rabbitmq_reader_thread = RabbitMQEventReaderThread()
         self.rabbitmq_reader_thread.start()
@@ -74,17 +77,21 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         logging.info("service_status_changed()")
         msg = json.loads(json_msg)
         if msg['origin'] == SERVICE_NAME_RABBITMQ:
-            qt_component = self.status_checkBox_rabbitmq
+            checkbox_component = self.status_checkBox_rabbitmq
+            label_component = self.status_label_rabbitmq
         elif msg['origin'] == SERVICE_NAME_EYEFISERVER2:
-            qt_component = self.status_checkBox_eyefiserver2
+            checkbox_component = self.status_checkBox_eyefiserver2
+            label_component = self.status_label_eyefiserver2
         else:
             logging.warn("Unknown origin of event: %s", msg['origin'])
             return
 
         if msg['extra'].get('new_status', None) == SERVICE_STATUS_UP:
-            qt_component.setChecked(True)
+            checkbox_component.setChecked(True)
+            label_component.setText("<font color='green'><b>RUNNING</b></font>")
         elif msg['extra'].get('new_status', None) == SERVICE_STATUS_DOWN:
-            qt_component.setChecked(False)
+            checkbox_component.setChecked(False)
+            label_component.setText("<font color='red'><b>STOPPED</b></font>")
         else:
             logging.warn("Unknown 'new_status': %s", msg['extra'].get('new_status', ''))
 

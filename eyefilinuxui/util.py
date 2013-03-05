@@ -71,6 +71,7 @@ def _send_amqp_msg(msg, queue_name):
 
 
 def create_event(origin, event_type, extra={}):
+    """Creates a low-level event"""
     assert isinstance(extra, dict)
     return {
         'origin': origin, # ORIGIN of the event
@@ -80,7 +81,7 @@ def create_event(origin, event_type, extra={}):
 
 
 def send_event(origin, event_type, extra={}):
-    """Low-level method to send an event"""
+    """Low-level method to create and send an event"""
     return _send_amqp_msg(create_event(origin, event_type, extra), EVENT_QUEUE_NAME)
 
 
