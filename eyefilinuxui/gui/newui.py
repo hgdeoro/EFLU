@@ -78,7 +78,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self._resize_current_image()
 
     def service_status_changed(self, json_msg):
-        logging.info("service_status_changed()")
+        logger.info("service_status_changed()")
         msg = json.loads(json_msg)
         if msg['origin'] == SERVICE_NAME_RABBITMQ:
             checkbox_component = self.status_checkBox_rabbitmq
@@ -87,7 +87,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             checkbox_component = self.status_checkBox_eyefiserver2
             label_component = self.status_label_eyefiserver2
         else:
-            logging.warn("Unknown origin of event: %s", msg['origin'])
+            logger.warn("Unknown origin of event: %s", msg['origin'])
             return
 
         if msg['extra'].get('new_status', None) == SERVICE_STATUS_UP:
@@ -97,7 +97,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             checkbox_component.setChecked(False)
             label_component.setText("<font color='red'><b>STOPPED</b></font>")
         else:
-            logging.warn("Unknown 'new_status': %s", msg['extra'].get('new_status', ''))
+            logger.warn("Unknown 'new_status': %s", msg['extra'].get('new_status', ''))
 
     def _connect_signals(self):
         """Connect the signals"""
@@ -206,5 +206,6 @@ def start_gui():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     app, window = start_gui()
     sys.exit(app.exec_())

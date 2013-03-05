@@ -159,17 +159,13 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
 
     def _check_child_pids():
         _logger.debug("_check_child_pids()")
-        for p in process:
+        for p in list(process):
             returncode = p.poll()
             if returncode is not None:
-                _logger.info("Process %s finished with exit status %s. Will join()", p, returncode)
-                p.join()
-                _logger.info("join() OK", p, returncode)
+                _logger.info("Process %s finished with exit status %s. Will wait() on it", p, returncode)
+                p.wait()
+                _logger.info("wait() returned...")
                 process.remove(p)
-                # process changed... returning...
-                return
-
-    # connection.add_timeout(2, _check_child_pids) # this call the callback just 1 time
 
     def callback(ch, method, properties, msg):
         msg = json.loads(msg)
@@ -224,18 +220,6 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
 
         # FIXME: remove this, implement or comment this
         if action == MSG_CHECK_CHILD:
-            #    if process:
-            #        # ret_code = process.wait()
-            #        process[0].poll()
-            #        if process[0].returncode is not None:
-            #            _logger.info("Cleaning up finished Popen process. Exit status: %s", process[0].returncode)
-            #            if process[0].returncode != 0:
-            #                _logger.warn("Exit status != 0")
-            #            process[0].wait()
-            #            while process:
-            #                process.pop()
-            #        else:
-            #            _logger.debug("Popen process %s is running", process[0])
             _check_child_pids()
             return
 
