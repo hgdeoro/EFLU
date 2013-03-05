@@ -11,6 +11,7 @@ import sys
 import PySide
 
 from PySide import QtCore, QtGui
+from eyefilinuxui.gui.rabbitmq_keepalive import RabbitMQKeepAliveThread
 
 # http://stackoverflow.com/questions/13302908/better-way-of-going-from-pil-to-pyside-qimage
 sys.modules['PyQt4'] = PySide # HACK for ImageQt
@@ -64,6 +65,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         # Create thread and connect
         self.rabbitmq_reader_thread = RabbitMQToQtSignalThread()
         self.rabbitmq_reader_thread.start()
+
+        self.rabbitmq_keepalive_thread = RabbitMQKeepAliveThread()
+        self.rabbitmq_keepalive_thread.start()
 
         # self.clear_exif()
         self.update_exif(None)

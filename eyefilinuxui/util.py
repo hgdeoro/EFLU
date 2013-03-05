@@ -26,6 +26,7 @@ EYEFISERVER_QUEUE_NAME = 'eflu.eyefiserver2'
 MSG_START = 'start'
 MSG_GET_PID = 'get_pid'
 MSG_QUIT = 'quit'
+MSG_CHECK_CHILD = 'check_child'
 
 
 #===============================================================================
@@ -79,6 +80,11 @@ def _send_amqp_msg(msg, queue_name):
     connection.close()
 
 
+def is_event(msg):
+    """Returns True if the messages is an event"""
+    return isinstance(msg, dict) and 'origin' in msg and 'type' in msg and 'extra' in msg
+
+
 def create_event(origin, event_type, extra={}):
     """Creates a low-level event"""
     assert isinstance(extra, dict)
@@ -115,13 +121,23 @@ def create_service_status_event(service_name, new_status):
     return create_event(service_name, 'service_status', {'new_status': new_status})
 
 
-def event_is_keepaliver(msg):
+# Use `MSG_CHECK_CHILD` instead of `keepalive`
+#def event_is_keepaliver(msg):
+#    assert isinstance(msg, dict)
+#    return msg['type'] == 'keepalive'
+#
+#
+#def create_keepalive_event(service_name):
+#    return create_event(service_name, 'keepalive')
+
+
+def event_is_child_management(msg):
     assert isinstance(msg, dict)
-    return msg['type'] == 'keepalive'
+    return msg['type'] == 'child_management'
 
 
-def create_keepalive_event(service_name):
-    return create_event(service_name, 'keepalive')
+def create_child_management_event(origin, action):
+    return create_event(origin, 'child_management', {'action': action})
 
 
 #===============================================================================
@@ -159,18 +175,21 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
         msg = json.loads(msg)
         _logger.info("Message received: %s", pprint.pformat(msg))
 
-        # First check if this is an event!
-        #        if event_is_keepaliver(msg):
-        #            _check_child_pids()
-        #            return
+        if is_event(msg):
+            # new-style 'event' based actions
+            action = msg['extra']['action']
+        else:
+            # old-style actions
+            action = msg['action']
 
-        if msg.get('action', None) in action_map:
-            func = action_map[msg['action']]
+        if action in action_map:
+            logging.debug("Using user-provided action")
+            func = action_map[action]
             assert callable(func)
             func()
             return
 
-        if msg.get('action', None) == MSG_QUIT:
+        if action == MSG_QUIT:
             closing_connection[0] = True
             if process:
                 _logger.warn("A process exists: %s", process[0])
@@ -180,7 +199,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
             connection.close()
             return
 
-        if msg.get('action', None) == MSG_GET_PID:
+        if action == MSG_GET_PID:
             response = {}
             if '_uuid' in msg:
                 response['_uuid'] = msg['_uuid']
@@ -192,7 +211,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
             conn.send(response)
             return
 
-        if msg.get('action', None) == MSG_START:
+        if action == MSG_START:
             if process:
                 # FIXME: raise error? stop old process? warn and continue?
                 _logger.warn("A process exists: %s. It will be ignored... this can cause problems!", process[0])
@@ -204,19 +223,20 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
             return
 
         # FIXME: remove this, implement or comment this
-        if msg.get('action', None) == "CHECK_CHILD":
-            if process:
-                # ret_code = process.wait()
-                process[0].poll()
-                if process[0].returncode is not None:
-                    _logger.info("Cleaning up finished Popen process. Exit status: %s", process[0].returncode)
-                    if process[0].returncode != 0:
-                        _logger.warn("Exit status != 0")
-                    process[0].wait()
-                    while process:
-                        process.pop()
-                else:
-                    _logger.debug("Popen process %s is running", process[0])
+        if action == MSG_CHECK_CHILD:
+            #    if process:
+            #        # ret_code = process.wait()
+            #        process[0].poll()
+            #        if process[0].returncode is not None:
+            #            _logger.info("Cleaning up finished Popen process. Exit status: %s", process[0].returncode)
+            #            if process[0].returncode != 0:
+            #                _logger.warn("Exit status != 0")
+            #            process[0].wait()
+            #            while process:
+            #                process.pop()
+            #        else:
+            #            _logger.debug("Popen process %s is running", process[0])
+            _check_child_pids()
             return
 
         _logger.error("UNKNOWN MESSAGE: %s", pprint.pformat(msg))
@@ -254,12 +274,15 @@ def generic_start_multiprocess(start_args, action_map, _logger, queue_name, stat
     state['parent_conn'] = parent_conn
     state['process'] = process
 
-    _send_amqp_msg({'action': MSG_START}, queue_name)
+    _send_amqp_msg(create_child_management_event('generic_start_multiprocess()', MSG_START),
+        queue_name)
 
 
 def generic_mp_stop(_logger, queue_name, state):
     _logger.info("Stopping...")
-    _send_amqp_msg({'action': MSG_QUIT}, queue_name)
+    _send_amqp_msg(create_child_management_event('generic_mp_stop()', MSG_QUIT),
+        queue_name)
+
     state['running'] = False
     _logger.info("Waiting for process.join() on pid %s...", state['process'].pid)
     state['process'].terminate()
@@ -270,6 +293,8 @@ def generic_mp_stop(_logger, queue_name, state):
 def generic_mp_get_pid(_logger, queue_name, state):
     """Returns the PID, or None if not running"""
     msg_uuid = str(uuid.uuid4())
+
+    # FIXME: migrate to use `create_child_management_event()`
     _send_amqp_msg({'_uuid': msg_uuid, 'action': MSG_GET_PID}, queue_name)
 
     msg = _recv_msg(state, msg_uuid=msg_uuid)
