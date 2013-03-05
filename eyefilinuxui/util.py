@@ -115,6 +115,15 @@ def create_service_status_event(service_name, new_status):
     return create_event(service_name, 'service_status', {'new_status': new_status})
 
 
+def event_is_keepaliver(msg):
+    assert isinstance(msg, dict)
+    return msg['type'] == 'keepalive'
+
+
+def create_keepalive_event(service_name):
+    return create_event(service_name, 'keepalive')
+
+
 #===============================================================================
 # MultiProcessing targets
 #===============================================================================
@@ -150,13 +159,18 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
         msg = json.loads(msg)
         _logger.info("Message received: %s", pprint.pformat(msg))
 
-        if msg['action'] in action_map:
+        # First check if this is an event!
+        #        if event_is_keepaliver(msg):
+        #            _check_child_pids()
+        #            return
+
+        if msg.get('action', None) in action_map:
             func = action_map[msg['action']]
             assert callable(func)
             func()
             return
 
-        if msg['action'] == MSG_QUIT:
+        if msg.get('action', None) == MSG_QUIT:
             closing_connection[0] = True
             if process:
                 _logger.warn("A process exists: %s", process[0])
@@ -166,7 +180,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
             connection.close()
             return
 
-        if msg['action'] == MSG_GET_PID:
+        if msg.get('action', None) == MSG_GET_PID:
             response = {}
             if '_uuid' in msg:
                 response['_uuid'] = msg['_uuid']
@@ -178,7 +192,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
             conn.send(response)
             return
 
-        if msg['action'] == MSG_START:
+        if msg.get('action', None) == MSG_START:
             if process:
                 # FIXME: raise error? stop old process? warn and continue?
                 _logger.warn("A process exists: %s. It will be ignored... this can cause problems!", process[0])
@@ -190,7 +204,7 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
             return
 
         # FIXME: remove this, implement or comment this
-        if msg['action'] == "CHECK_CHILD":
+        if msg.get('action', None) == "CHECK_CHILD":
             if process:
                 # ret_code = process.wait()
                 process[0].poll()
@@ -203,11 +217,6 @@ def generic_target(conn, _logger, amqp_queue_name, start_args, action_map):
                         process.pop()
                 else:
                     _logger.debug("Popen process %s is running", process[0])
-            return
-
-        if msg['action'] in action_map:
-            func = action_map[msg['action']]
-            func(msg, process)
             return
 
         _logger.error("UNKNOWN MESSAGE: %s", pprint.pformat(msg))
