@@ -11,7 +11,6 @@ import sys
 import PySide
 
 from PySide import QtCore, QtGui
-from eyefilinuxui.gui.rabbitmq_keepalive import RabbitMQKeepAliveThread
 
 # http://stackoverflow.com/questions/13302908/better-way-of-going-from-pil-to-pyside-qimage
 sys.modules['PyQt4'] = PySide # HACK for ImageQt
@@ -24,6 +23,7 @@ from eyefilinuxui.util import get_exif_tags, get_tags_to_show, how_much_rotate, 
     SERVICE_NAME_EYEFISERVER2
 from eyefilinuxui.gui.ui.mainwindow_ui import Ui_MainWindow
 from eyefilinuxui.gui.rabbitmq_to_qtsignal import RabbitMQToQtSignalThread
+from eyefilinuxui.gui.rabbitmq_keepalive import RabbitMQKeepAliveThread
 
 
 logger = logging.getLogger(__name__)
@@ -163,19 +163,23 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.current_image_rotate = how_much_rotate(self.current_image_exif) or 0
 
     def add_current_image_to_thumb_list(self):
+        #    if len(self.thumbs) > 4:
+        #        self.thumbs.pop(0)
+        #        self.listWidgetThumbs.takeItem(0)
 
-        # FIXME: fix abuse of memory consumption!
-        if len(self.thumbs) > 4:
-            self.thumbs.pop(0)
-            self.listWidgetThumbs.takeItem(0)
+        # Create resized image
+        icon_image = self.current_image.copy()
+        icon_image.thumbnail((100, 100,), resample=Image.ANTIALIAS)
+        icon_image_qt = ImageQt.ImageQt(icon_image)
+        icon_qpixmap = QtGui.QPixmap.fromImage(icon_image_qt, QtCore.Qt.ImageConversionFlag.AutoColor)
+        icon = QtGui.QIcon(icon_qpixmap)
 
         thumb_item = QtGui.QListWidgetItem()
-        icon = QtGui.QIcon(self.current_pixmap)
         thumb_item.setIcon(icon)
         self.listWidgetThumbs.addItem(thumb_item)
 
         self.thumbs.append(
-            (self.current_image_filename, self.current_image, self.current_image_qt, self.current_pixmap, icon)
+            (self.current_image_filename, icon_image, icon_image_qt, icon)
         )
 
     def display_image(self, image_filename, add_to_thumb_list=True):
