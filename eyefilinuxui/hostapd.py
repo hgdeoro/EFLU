@@ -54,7 +54,7 @@ def _generate_test_config():
 
 # FIXME: lock
 def start_hostapd(config_filename):
-    start_args = ["sudo", "hostapd", config_filename]
+    start_args = ["kdesudo", "--", "hostapd", config_filename]
     action_map = {}
     return generic_start_multiprocess(start_args, action_map, logger, HOSTAPD_QUEUE_NAME, STATE)
 

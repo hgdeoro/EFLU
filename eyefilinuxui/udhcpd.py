@@ -55,7 +55,7 @@ def _generate_test_config():
 
 # FIXME: lock
 def start_udhcpd(config_filename):
-    start_args = ["sudo", "busybox", "udhcpd", "-f", config_filename]
+    start_args = ["kdesudo", "--", "busybox", "udhcpd", "-f", config_filename]
     action_map = {}
     return generic_start_multiprocess(start_args, action_map, logger, UDHCPD_QUEUE_NAME, STATE)
 
