@@ -163,10 +163,17 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.current_image_rotate = how_much_rotate(self.current_image_exif) or 0
 
     def add_current_image_to_thumb_list(self):
+
+        # FIXME: fix abuse of memory consumption!
+        if len(self.thumbs) > 4:
+            self.thumbs.pop(0)
+            self.listWidgetThumbs.takeItem(0)
+
         thumb_item = QtGui.QListWidgetItem()
         icon = QtGui.QIcon(self.current_pixmap)
         thumb_item.setIcon(icon)
         self.listWidgetThumbs.addItem(thumb_item)
+
         self.thumbs.append(
             (self.current_image_filename, self.current_image, self.current_image_qt, self.current_pixmap, icon)
         )
