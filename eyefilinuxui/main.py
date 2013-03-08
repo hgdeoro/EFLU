@@ -17,7 +17,7 @@ from eyefilinuxui.networking_setup import nm_check_disconnected, \
 from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config, \
     start_eyefiserver2, stop_eyefiserver2
 from eyefilinuxui.gui.newui import start_gui
-from eyefilinuxui.util import _check_amqp_connection
+from eyefilinuxui.util import _check_amqp_connection, kdesudo
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +61,14 @@ def main():
         _check_amqp_connection()
     except socket.error:
         # TODO: maybe we could start the gui even if rabbitmq isn't working
-        print "ERROR: couldn't connect to RabbitMQ"
-        sys.exit(1)
+        logger.warn("Couldn't connect to RabbitMQ... Will try to connect...")
+        kdesudo(["sudo", "service", "rabbitmq-server", "start"])
+
+        try:
+            _check_amqp_connection()
+        except socket.error:
+            print "ERROR: couldn't connect to RabbitMQ"
+            sys.exit(1)
 
     #===========================================================================
     # Start the UI
@@ -82,13 +88,6 @@ def main():
     if not ok:
         nm_try_disconnect(args.interface)
         qt_app.processEvents()
-
-    # FIXME: setup firewall
-    #    sudo iptables -I INPUT -i $IFACE -p icmp -j ACCEPT
-    #    sudo iptables -I INPUT -i $IFACE -p tcp --dport 59278 -d $IP -j ACCEPT
-    #    sudo iptables -I INPUT -i $IFACE -p udp --dport 67:68 -j ACCEPT
-    #    sudo iptables -I FORWARD -i $IFACE -j REJECT
-    #    sudo iptables -I FORWARD -o $IFACE -j REJECT
 
     ifconfig(args.interface, ip)
     qt_app.processEvents()
