@@ -177,9 +177,14 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         thumb_item = QtGui.QListWidgetItem()
         thumb_item.setIcon(icon)
         self.listWidgetThumbs.addItem(thumb_item)
+        #    self.listWidgetThumbs.setCurrentRow(thumb_item)
+        #    scrollbar = self.listWidgetThumbs.horizontalScrollBar()
+        #    assert isinstance(scrollbar, QtGui.QScrollBar)
+        #    scrollbar.value()
+        #    scrollbar.heightForWidth()
 
         self.thumbs.append(
-            (self.current_image_filename, icon_image, icon_image_qt, icon)
+            (self.current_image_filename, icon_image, icon_image_qt, icon_qpixmap, icon)
         )
 
     def display_image(self, image_filename, add_to_thumb_list=True):
