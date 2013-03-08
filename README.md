@@ -47,7 +47,7 @@ Screenshot
 Notes
 -----
 
-- the wireless interface is turned down using nmcli. To give it back to life, use `nmcli con up id NETWORKNAME`.
+- the wireless interface is disconnected using nmcli. To bring it back to life, use `nmcli con up id NETWORKNAME`.
 
 License
 -------
