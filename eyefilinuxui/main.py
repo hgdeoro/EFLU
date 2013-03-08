@@ -18,6 +18,7 @@ from eyefilinuxui.eyefiserver2_adaptor import eyefiserver2_gen_config, \
     start_eyefiserver2, stop_eyefiserver2
 from eyefilinuxui.gui.newui import start_gui
 from eyefilinuxui.util import _check_amqp_connection, kdesudo
+import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,17 @@ def main():
     for mac in mac_whitelist:
         if len(mac.split(':')) != 6 or list(set([len(x) for x in mac.split(':')])) != [2]:
             parser.error("Invalid MAC: '{0}' - Use `xx:xx:xx:xx:xx:xx` format".format(mac))
+
+    for command in ("kdesudo", "hostapd", "busybox", "rabbitmqctl", "nmcli"):
+        ret = subprocess.call(["which", command])
+        if ret != 0:
+            print "ERROR: you don't have '{0}' installed or in the path...".format(command)
+            sys.exit(1)
+
+    busybox_list = subprocess.check_output(["busybox", "--list"])
+    if busybox_list.find("udhcpd") == -1:
+        print "ERROR: you don't have the 'udhcpd' applet of BusyBox..."
+        sys.exit(1)
 
     try:
         _check_amqp_connection()
