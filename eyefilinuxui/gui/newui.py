@@ -193,29 +193,33 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.scene.clear()
         self.graphicsView.resetTransform()
         self.graphicsView.resetMatrix()
-        QtGui.QApplication.processEvents()
+
+        # QtGui.QApplication.processEvents()
+        # Right now, calling `QtGui.QApplication.processEvents()` is BOGUS,
+        #  since it allow the user to clic a thumb and change `self.current_imagexxx`,
+        #  before the thumb is created!
 
         self.statusBar.showMessage("Image: {0}".format(self.current_image_filename))
-        QtGui.QApplication.processEvents()
+        # QtGui.QApplication.processEvents()
 
         self.current_image_qt = ImageQt.ImageQt(self.current_image)
-        QtGui.QApplication.processEvents()
+        # QtGui.QApplication.processEvents()
 
         self.current_pixmap = QtGui.QPixmap.fromImage(self.current_image_qt, QtCore.Qt.ImageConversionFlag.AutoColor)
-        QtGui.QApplication.processEvents()
+        # QtGui.QApplication.processEvents()
 
         self.scene.addPixmap(self.current_pixmap)
         if self.current_image_rotate != 0:
             self.graphicsView.rotate(self.current_image_rotate) # update_exif() updates `image_rotate`
         self._resize_current_image()
-        QtGui.QApplication.processEvents()
+        # QtGui.QApplication.processEvents()
 
         self.update_exif(self.current_image_filename)
-        QtGui.QApplication.processEvents()
+        # QtGui.QApplication.processEvents()
 
         if add_to_thumb_list:
             self.add_current_image_to_thumb_list()
-            QtGui.QApplication.processEvents()
+            # QtGui.QApplication.processEvents()
 
 
 def start_gui():
