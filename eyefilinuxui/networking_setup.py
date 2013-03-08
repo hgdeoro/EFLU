@@ -44,13 +44,14 @@ def nm_try_disconnect(interface):
 
 
 def ifconfig(interface, ip):
-    return subprocess.call(["kdesudo", "ifconfig", interface, "{0}/24".format(ip)])
+    return subprocess.call(["kdesudo", "--", "ifconfig", interface, "{0}/24".format(ip)])
 
 
 def iptables(interface, ip):
-    return subprocess.call(["kdesudo", "iptables", "-I", "INPUT", "-i", interface,
+    # FIXME: put comments and check it to not repeat the setup of firewall every time the app starts
+    return subprocess.call(["kdesudo", "--", "iptables", "-I", "INPUT", "-i", interface,
         "-p", "icmp", "-d", ip, "-j", "ACCEPT"])
-    return subprocess.call(["kdesudo", "iptables", "-I", "INPUT", "-i", interface,
-        "-p", "tcp", "-d", ip, "--dport", "59278", "-j", "ACCEPT"])
-    return subprocess.call(["kdesudo", "iptables", "-I", "INPUT", "-i", interface,
-        "-p", "udp", "-d", ip, "--dport", "67:68", "-j", "ACCEPT"])
+    return subprocess.call(["kdesudo", "--", "iptables", "-I", "INPUT", "-i", interface,
+        "-p", "tcp", "-d", ip, "--dport", "--", "59278", "-j", "ACCEPT"])
+    return subprocess.call(["kdesudo", "--", "iptables", "-I", "INPUT", "-i", interface,
+        "-p", "udp", "-d", ip, "--dport", "--", "67:68", "-j", "ACCEPT"])
