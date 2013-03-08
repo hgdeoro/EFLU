@@ -18,6 +18,14 @@ And then:
 
 - on each upload, the image is shown in the UI, and a thumbnail is added, this is glued together using `RabbitMQ`.
 
+Example
+-------
+
+    ./main.sh --interface wlan0 --wifi_ssid MY-PRIVATE-WIFI-NETWORK --wifi_passphrase WIFI-PASSWORD \
+        --eyefi_upload_key 0123456789abcdef0123456789abcdef --eyefi_mac XX:XX:XX:XX:XX:XX \
+        --upload_dir /path/to/directory
+
+
 Requires
 --------
 
@@ -28,7 +36,7 @@ Requires
 - RabbitMQ
 - a wireless interface
 
-This is currently developed and tested on Ubuntu 12.10.
+This is currently developed and tested on Ubuntu 12.10. You need at least: `hostapd`, `busybox-static`, `rabbitmq-server`, `kdesudo`, `python-pyside`.
 
 Notes
 -----
