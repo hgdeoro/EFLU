@@ -38,6 +38,12 @@ Requires
 
 This is currently developed and tested on Ubuntu 12.10. You need at least: `hostapd`, `busybox-static`, `rabbitmq-server`, `kdesudo`, `python-pyside`.
 
+Screenshot
+----------
+
+![EFLU Screenshot](https://raw.github.com/hgdeoro/EFLU/master/eflu-screenshot-2.jpg "Screenshot")
+
+
 Notes
 -----
 
