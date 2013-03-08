@@ -381,3 +381,21 @@ def how_much_rotate(tags):
     else:
         logger.warn("Unknown 'Image Orientation' value: %s", image_orientation)
         return None
+
+
+#===============================================================================
+# subprocess
+#===============================================================================
+
+def kdesudo(cmd_args):
+    """
+    Executes the command with kdesudo
+
+    Use:
+        kdesudo(["iptables", "-I", "INPUT", "-j", "ACCEPT"])
+    """
+    assert isinstance(cmd_args, list)
+    ret = subprocess.call(["kdesudo", "--"] + cmd_args)
+    if ret != 0:
+        logger.error("kdesudo exit status %s when executing '%s'", ret, " ".join(cmd_args))
+    return ret

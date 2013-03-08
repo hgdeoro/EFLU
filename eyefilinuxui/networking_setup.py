@@ -6,6 +6,7 @@ Created on Mar 2, 2013
 
 import logging
 import subprocess
+from eyefilinuxui.util import kdesudo
 
 logger = logging.getLogger(__name__)
 
@@ -44,14 +45,22 @@ def nm_try_disconnect(interface):
 
 
 def ifconfig(interface, ip):
-    return subprocess.call(["kdesudo", "--", "ifconfig", interface, "{0}/24".format(ip)])
+    return kdesudo(["ifconfig", interface, "{0}/24".format(ip)])
 
 
 def iptables(interface, ip):
     # FIXME: put comments and check it to not repeat the setup of firewall every time the app starts
-    return subprocess.call(["kdesudo", "--", "iptables", "-I", "INPUT", "-i", interface,
-        "-p", "icmp", "-d", ip, "-j", "ACCEPT"])
-    return subprocess.call(["kdesudo", "--", "iptables", "-I", "INPUT", "-i", interface,
-        "-p", "tcp", "-d", ip, "--dport", "--", "59278", "-j", "ACCEPT"])
-    return subprocess.call(["kdesudo", "--", "iptables", "-I", "INPUT", "-i", interface,
-        "-p", "udp", "-d", ip, "--dport", "--", "67:68", "-j", "ACCEPT"])
+    iptables_rules = subprocess.check_output(["kdesudo", "--", "iptables", "-n", "-v", "-L", "INPUT"])
+    logger.debug("iptables_rules: %s", iptables_rules)
+
+    if iptables_rules.find("/* EyeFiServerUi/1 */") == -1:
+        kdesudo(["iptables", "-I", "INPUT", "-i", interface,
+            "-p", "icmp", "-d", ip, "-m", "comment", "--comment", "EyeFiServerUi/1", "-j", "ACCEPT"])
+    if iptables_rules.find("/* EyeFiServerUi/2 */") == -1:
+        kdesudo(["iptables", "-I", "INPUT", "-i", interface,
+            "-p", "tcp", "-d", ip, "-m", "comment", "--comment", "EyeFiServerUi/2",
+            "--dport", "59278", "-j", "ACCEPT"])
+    if iptables_rules.find("/* EyeFiServerUi/3 */") == -1:
+        kdesudo(["iptables", "-I", "INPUT", "-i", interface,
+            "-p", "udp", "-d", ip, "-m", "comment", "--comment", "EyeFiServerUi/3",
+            "--dport", "67:68", "-j", "ACCEPT"])
