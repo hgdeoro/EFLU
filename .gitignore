@@ -1,2 +1,4 @@
 *.pyc
 /test_image_*.jpg
+/virtualenv
+*~
