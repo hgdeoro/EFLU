@@ -1,7 +1,7 @@
-EyeFiLinuxUi
+EFLU
 ------------
 
-Guess what! This is a VERY simple UI to use EyeFi cards on Linux.
+This is a VERY simple UI to receive images from a EyeFi cards on Linux. I use it to upload the photos from the camera to the computer, ensuring the EyeFi card is *NOT* connected to internet.
 
 What does?
 ----------
@@ -40,4 +40,6 @@ License
 
 GPLv3. See `LICENSE.txt`.
 
-Includes the code from [EyeFiServer2](https://code.google.com/p/eyefiserver2/) which is also GPLv3
+Includes the code from [EyeFiServer2](https://code.google.com/p/eyefiserver2/) which is also GPLv3.
+
+All trademarks belong to legitimate owners.
